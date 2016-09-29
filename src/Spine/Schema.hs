@@ -3,6 +3,12 @@
 module Spine.Schema (
     initialise
   , destroy
+
+  -- halp
+  , DynamoValue
+  , KeyCodec
+  , cText
+  , writeOrUpdate
   ) where
 
 import           Control.Lens (view, (^.), (.~))
@@ -94,17 +100,9 @@ writeOrUpdate t k v = do
         (put k) v
       ]
 
-kThing :: Key Text
-kThing =
-  StringKey "thing"
-
 type DynamoValue = (Text, D.AttributeValue)
 
 type KeyCodec k = Codec (Key k) k DynamoValue
-
-cThing :: KeyCodec Text
-cThing =
-  cText kThing
 
 cText :: Key Text -> KeyCodec Text
 cText k  =
