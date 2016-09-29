@@ -6,6 +6,7 @@ module Test.Spine.Schema (
     withClean
   ) where
 
+import           Spine.Data
 import           Spine.Schema
 
 import           Mismi (AWS, awsBracket)

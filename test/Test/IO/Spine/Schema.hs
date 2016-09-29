@@ -4,6 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Test.IO.Spine.Schema where
 
+import           Spine.Data
 import           Spine.Schema
 
 import           P

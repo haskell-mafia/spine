@@ -19,6 +19,7 @@ library
                      , conduit                         == 1.2.*
                      , containers                      == 0.5.*
                      , lens                            >= 4.6        && < 4.13
+                     , semigroups                      >= 0.16       && < 0.19
                      , text                            == 1.2.*
                      , transformers                    >= 0.4        && < 0.6
 
