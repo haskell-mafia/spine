@@ -104,12 +104,7 @@ type KeyCodec k = Codec (Key k) k DynamoValue
 
 cThing :: KeyCodec Text
 cThing =
-  Codec {
-      put = \a ->
-        (renderKey kThing, D.attributeValue & D.avS .~ Just a)
-    , get = \(_, v) ->
-        v ^. D.avS
-    }
+  cText kThing
 
 cText :: Key Text -> KeyCodec Text
 cText k  =
