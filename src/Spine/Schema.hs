@@ -73,3 +73,15 @@ destroy schema =
     void . A.send . D.deleteTable $ tableName t
     void . A.await D.tableNotExists . D.describeTable $ tableName t
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
+
+{--
+tableCodec :: Table -> Codec (Key a) AWS
+tableCodec t =
+  Codec {
+      put = \k v ->
+        A.send $ D.putItem (tableName t) &
+
+    , get = \k ->
+        pure Nothing
+    }
+--}

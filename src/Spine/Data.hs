@@ -58,10 +58,10 @@ data Key a where
 data Codec' f g a b =
   Codec' { codecEncoder :: f a , codecDecoder :: g b }
 
-data Codec a m =
+data Codec f a v =
   Codec {
-      put :: Key a -> a -> m ()
-    , get :: Key a -> m (Maybe a)
+      put :: a -> v
+    , get :: v -> Maybe a
     }
 
 -- *-simple style

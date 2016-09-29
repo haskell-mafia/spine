@@ -2,21 +2,26 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Spine.Example (
     kThing
+  , cThingy
   ) where
 
 import           Spine.Data
 
 import           P
-import           System.IO
 
 kThing :: Key Text
 kThing =
   StringKey "thing"
 
+--type CodecAWS = Codec AWS
 
-thingy :: Codec (Text) IO
-thingy =
+type KeyCodec k = Codec (Key k) k k
+
+cThingy :: KeyCodec Text
+cThingy =
   Codec {
-      put = kThing
-    , get = kThing
+      put =
+        id
+    , get =
+        Just
     }
