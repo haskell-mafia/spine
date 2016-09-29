@@ -14,6 +14,10 @@ module Spine.Data (
   , tableToSchemaElement
   , tableToAttributeDefintions
   , toThroughput
+
+  , Codec' (..)
+  , Codec (..)
+  , CodecX (..)
   ) where
 
 import           Control.Lens ((.~))
@@ -51,6 +55,19 @@ data Key a where
   IntKey :: Text -> Key Int
   StringKey :: Text -> Key Text
 
+data Codec' f g a b =
+  Codec' { codecEncoder :: f a , codecDecoder :: g b }
+
+data Codec a m =
+  Codec {
+      put :: Key a -> a -> m ()
+    , get :: Key a -> m (Maybe a)
+    }
+
+-- *-simple style
+class CodecX a where
+  putx :: Key a -> a -> m ()
+  getx :: Key a -> m (Maybe a)
 
 -- type Codec e v = Tuple (v -> String) (String -> Either e v)
 --data Codec a where

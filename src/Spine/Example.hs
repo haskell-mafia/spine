@@ -7,7 +7,16 @@ module Spine.Example (
 import           Spine.Data
 
 import           P
+import           System.IO
 
 kThing :: Key Text
 kThing =
   StringKey "thing"
+
+
+thingy :: Codec (Text) IO
+thingy =
+  Codec {
+      put = kThing
+    , get = kThing
+    }
