@@ -29,6 +29,8 @@ library
                        src
 
   exposed-modules:
+                       Spine.Data
+                       Spine.Example
                        Spine.Schema
 
 test-suite test-io

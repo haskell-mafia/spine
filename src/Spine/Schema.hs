@@ -1,21 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GADTs #-}
 module Spine.Schema (
-    Schema (..)
-  , initialise
+    initialise
   , destroy
   ) where
 
-import           Control.Lens (view, (^.), (.~), _Just)
+import           Control.Lens (view, (^.), (.~))
 import           Control.Monad.IO.Class (liftIO)
-
-import           Numeric.Natural (Natural (..))
 
 import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.List as C
-import           Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Set as S
 
@@ -27,91 +21,13 @@ import qualified Network.AWS.DynamoDB as D
 
 import           P
 
+import           Spine.Data
 
-data Schema =
-  Schema {
-      schemaPrefix :: Text
-    , schemaTables :: [Table]
-    }
-
-data Table = forall a b.
-  Table {
-      tableName :: Text
-    , tablePrimaryKey :: Key a
-    , tableSortKey :: Maybe (Key b)
-    , tableThroughput :: Throughput
-    }
-
-renderPrimaryKey :: Table -> Text
-renderPrimaryKey (Table _ v _ _) =
-  renderKey v
-
-renderSortKey :: Table -> Maybe Text
-renderSortKey (Table _ _ v _) =
-  renderKey <$> v
-
-renderKey :: Key a -> Text
-renderKey k =
-  case k of
-    StringKey v ->
-      v
-    IntKey v ->
-      v
-
-primaryKeyType :: Table -> D.ScalarAttributeType
-primaryKeyType (Table _ p _ _) =
-  keyType p
-
-sortKeyType :: Table -> Maybe D.ScalarAttributeType
-sortKeyType (Table _ _ s _) =
-  keyType <$> s
-
-keyType :: Key a -> D.ScalarAttributeType
-keyType k =
-  case k of
-    StringKey v ->
-      D.S
-    IntKey v ->
-      D.N
-
-data Throughput =
-  Throughput {
-      readThroughput :: Natural
-    , writeThroughput :: Natural
-    } deriving (Eq, Show)
-
-kContext :: Key Text
-kContext =
-  StringKey "thing"
-
-data Key a where
-  IntKey :: Text -> Key Int
-  StringKey :: Text -> Key Text
-
--- type Codec e v = Tuple (v -> String) (String -> Either e v)
---data Codec a where
-
-{-
-data Codec (Key a) where
-  Encode :: a -> Codec a
-  Decode :: a -> (Maybe (Codec a))
--}
-
-tableToCreate :: Table -> D.CreateTable
-tableToCreate t =
-  D.createTable
-    (tableName t)
-    (D.keySchemaElement (renderPrimaryKey t) D.Hash :| maybe [] (\x -> [D.keySchemaElement x D.Range]) (renderSortKey t))
-    (D.provisionedThroughput (readThroughput $ tableThroughput t) (writeThroughput $ tableThroughput t))
-      & D.ctAttributeDefinitions .~ [
-          D.attributeDefinition (renderPrimaryKey t) (primaryKeyType t)
-        ] <> maybe [] (\(x, y) -> [D.attributeDefinition x y]) ((,) <$> renderSortKey t <*> sortKeyType t)
 
 initialise :: Schema -> AWS ()
 initialise schema = do
   tables <- A.paginate D.listTables =$=
     C.mapFoldable (view D.ltrsTableNames) $$
---    C.filter (T.isPrefixOf $ schemaPrefix schema) $$
     C.consume
   let
     indexed = S.fromList tables
@@ -122,38 +38,33 @@ initialise schema = do
     void . A.send . tableToCreate $ t
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
 
-  -- update throughput
-
-
-  -- ensure types are the same.
-
   forM_ (schemaTables schema) $ \t -> do
     liftIO . T.putStrLn . mconcat $ ["Waiting for table: ", tableName t]
     void . A.await D.tableExists . D.describeTable $ tableName t
     x <- A.send . D.describeTable $ tableName t
-
     case x ^. D.drsTable of
       Nothing ->
-        undefined
+        -- table doesn't exist
+        fail "no table yo ~ invariant. await broken? :<"
       Just v -> do
-        -- failure modes
---        (v ^. D.tdAttributeDefinitions)
---        (v ^. D.tdKeySchema)
         let
           checkRead = (v ^. D.tdProvisionedThroughput >>= view D.ptdReadCapacityUnits) /= Just (readThroughput $ tableThroughput t)
           checkWrite = (v ^. D.tdProvisionedThroughput >>= view D.ptdWriteCapacityUnits) /= (Just . writeThroughput $ tableThroughput t)
 
         -- update modes
-        when (checkRead || checkWrite) $
+        when (checkRead || checkWrite) $ do
+          liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
           void . A.send $ D.updateTable (tableName t) &
             D.utProvisionedThroughput .~ Just (toThroughput $ tableThroughput t)
 
+        -- failure modes
+        when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
+          fail "schema key noobs"
+
+        when (v ^. D.tdAttributeDefinitions /= tableToAttributeDefintions t) $
+          fail "schema attribute noobs"
+
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
-
-
-toThroughput :: Throughput -> D.ProvisionedThroughput
-toThroughput t =
-  D.provisionedThroughput (readThroughput t) (writeThroughput t)
 
 destroy :: Schema -> AWS ()
 destroy schema =
