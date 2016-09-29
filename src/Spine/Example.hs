@@ -15,9 +15,9 @@ kThing =
 
 --type CodecAWS = Codec AWS
 
-type KeyCodec k = Codec (Key k) k k
+type KeyCodec k v = Codec (Key k) k v
 
-cThingy :: KeyCodec Text
+cThingy :: KeyCodec Text Text
 cThingy =
   Codec {
       put =

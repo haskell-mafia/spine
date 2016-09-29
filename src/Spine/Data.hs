@@ -9,6 +9,7 @@ module Spine.Data (
   , Key (..)
   , renderPrimaryKey
   , renderSortKey
+  , renderKey
   , primaryKeyType
   , sortKeyType
   , tableToCreate

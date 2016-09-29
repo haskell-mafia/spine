@@ -10,6 +10,7 @@ import           Control.Monad.IO.Class (liftIO)
 
 import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.List as C
+import qualified Data.HashMap.Strict as H
 import qualified Data.Text.IO as T
 import qualified Data.Set as S
 
@@ -85,3 +86,36 @@ tableCodec t =
         pure Nothing
     }
 --}
+
+writeOrUpdate :: Table -> KeyCodec a -> a -> AWS ()
+writeOrUpdate t k v = do
+  void . A.send $ D.putItem (tableName t)
+    & D.piItem .~ H.fromList [
+        (put k) v
+      ]
+
+kThing :: Key Text
+kThing =
+  StringKey "thing"
+
+type DynamoValue = (Text, D.AttributeValue)
+
+type KeyCodec k = Codec (Key k) k DynamoValue
+
+cThing :: KeyCodec Text
+cThing =
+  Codec {
+      put = \a ->
+        (renderKey kThing, D.attributeValue & D.avS .~ Just a)
+    , get = \(_, v) ->
+        v ^. D.avS
+    }
+
+cText :: Key Text -> KeyCodec Text
+cText k  =
+  Codec {
+      put = \v ->
+        (renderKey k, D.attributeValue & D.avS .~ Just v)
+    , get = \(_, v) ->
+        v ^. D.avS
+    }
