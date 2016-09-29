@@ -129,31 +129,26 @@ initialise schema = do
 
   forM_ (schemaTables schema) $ \t -> do
     liftIO . T.putStrLn . mconcat $ ["Waiting for table: ", tableName t]
-    x <- A.await D.tableExists . D.describeTable $ tableName t
+    void . A.await D.tableExists . D.describeTable $ tableName t
+    x <- A.send . D.describeTable $ tableName t
 
-    case x of
-      A.AcceptSuccess ->
-        case x ^. D.drsTable of
-          Nothing ->
-            undefined
-          Just v -> do
-            -- failure modes
-    --        (v ^. D.tdAttributeDefinitions)
-    --        (v ^. D.tdKeySchema)
+    case x ^. D.drsTable of
+      Nothing ->
+        undefined
+      Just v -> do
+        -- failure modes
+--        (v ^. D.tdAttributeDefinitions)
+--        (v ^. D.tdKeySchema)
+        let
+          checkRead = (v ^. D.tdProvisionedThroughput >>= view D.ptdReadCapacityUnits) /= Just (readThroughput $ tableThroughput t)
+          checkWrite = (v ^. D.tdProvisionedThroughput >>= view D.ptdWriteCapacityUnits) /= (Just . writeThroughput $ tableThroughput t)
 
-            let
-              checkRead = v ^. D.tdProvisionedThroughput . _Just . D.ptdReadCapacityUnits . _Just /= (readThroughput $ tableThroughput t)
-              checkWrite = v ^. D.tdProvisionedThroughput . _Just . D.ptdWriteCapacityUnits . _Just /= (writeThroughput $ tableThroughput t)
+        -- update modes
+        when (checkRead || checkWrite) $
+          void . A.send $ D.updateTable (tableName t) &
+            D.utProvisionedThroughput .~ Just (toThroughput $ tableThroughput t)
 
-            -- update modes
-            when (checkRead || checkWrite) $
-    --        when (v ^. D.tdProvisionedThroughput /= Just (toThroughput $ tableThroughput t)) $
-              void . A.send $ D.updateTable (tableName t) &
-                D.utProvisionedThroughput .~ Just (toThroughput $ tableThroughput t)
-
-      _ -> undefined
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
-
 
 
 toThroughput :: Throughput -> D.ProvisionedThroughput
