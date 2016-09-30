@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs #-}
 module Spine.Schema (
     initialise
   , destroy
@@ -8,7 +9,7 @@ module Spine.Schema (
   , DynamoValue
   , KeyCodec
   , cText
-  , writeOrUpdate
+  , write
   ) where
 
 import           Control.Lens (view, (^.), (.~))
@@ -93,6 +94,20 @@ tableCodec t =
     }
 --}
 
+-- include pkey value
+--   + sort key value
+-- include [item, value]
+    -- all the things?
+write :: forall v a. Text -> Key v -> v -> [(Key a, a)] -> AWS ()
+write n p pv ks =
+  void . A.send $ D.putItem n
+    & D.piItem .~ H.fromList ([
+        cX p pv
+      ] <> fmap (uncurry cX) ks)
+--      ] <> maybe [] (\z -> [cX z sx]) s)
+
+
+{--
 writeOrUpdate :: Table -> KeyCodec a -> a -> AWS ()
 writeOrUpdate t k v = do
   void . A.send $ D.putItem (tableName t)
@@ -100,6 +115,17 @@ writeOrUpdate t k v = do
         (put k) v
       ]
 
+read :: Table -> KeyCodec a -> AWS (Maybe a)
+read t k = do
+  res <- A.send $ D.getItem (tableName t)
+    & D.giKey .~ H.fromList [
+        put k (renderKey
+      ]
+    & D.giConsistentRead .~
+      Just False
+
+  undefined
+--}
 type DynamoValue = (Text, D.AttributeValue)
 
 type KeyCodec k = Codec (Key k) k DynamoValue
@@ -112,3 +138,14 @@ cText k  =
     , get = \(_, v) ->
         v ^. D.avS
     }
+
+cX :: Key a -> a -> DynamoValue
+cX k z =
+  case k of
+    IntKey _ ->
+      let
+        wot = renderIntegral z
+      in
+        (renderKey k, D.attributeValue & D.avN .~ Just wot)
+    StringKey _ ->
+      (renderKey k, D.attributeValue & D.avS .~ Just z)
