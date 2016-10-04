@@ -5,6 +5,7 @@
 module Spine.Data (
     Schema (..)
   , Table (..)
+  , TableName (..)
   , Throughput (..)
   , Key (..)
   , renderPrimaryKey
@@ -35,11 +36,16 @@ newtype Schema =
 
 data Table = forall a b.
   Table {
-      tableName :: Text
+      tableName :: TableName
     , tablePrimaryKey :: Key a
     , tableSortKey :: Maybe (Key b)
     , tableThroughput :: Throughput
     }
+
+newtype TableName =
+  TableName {
+      renderTableName :: Text
+    } deriving (Eq, Show)
 
 data Throughput =
   Throughput {
@@ -86,7 +92,7 @@ keyType k =
 tableToCreate :: Table -> D.CreateTable
 tableToCreate t =
   D.createTable
-    (tableName t)
+    (renderTableName $ tableName t)
     (tableToSchemaElement t)
     (D.provisionedThroughput (readThroughput $ tableThroughput t) (writeThroughput $ tableThroughput t))
       & D.ctAttributeDefinitions .~ tableToAttributeDefintions t

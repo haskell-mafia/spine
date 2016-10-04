@@ -2,12 +2,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 module Spine.Schema (
-    initialise
+    InitialisationError (..)
+  , initialise
   , destroy
   ) where
 
 import           Control.Lens (view, (^.), (.~))
 import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Trans.Class (lift)
 
 import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.List as C
@@ -24,29 +26,35 @@ import           P
 
 import           Spine.Data
 
+import           X.Control.Monad.Trans.Either (EitherT, left)
 
-initialise :: Schema -> AWS ()
+data InitialisationError =
+    SchemaKeysMismatch
+  | SchemaAttributeMismatch
+  | InvariantMissingTable TableName
+    deriving (Eq, Show)
+
+initialise :: Schema -> EitherT InitialisationError AWS ()
 initialise schema = do
-  tables <- A.paginate D.listTables =$=
+  tables <- lift $ A.paginate D.listTables =$=
     C.mapFoldable (view D.ltrsTableNames) $$
     C.consume
   let
     indexed = S.fromList tables
-    missing = filter (\t -> not $ S.member (tableName t) indexed) $ schemaTables schema
+    missing = filter (\t -> not $ S.member (renderTableName $ tableName t) indexed) $ schemaTables schema
 
-  forM_ missing $ \t -> do
-    liftIO . T.putStrLn . mconcat $ ["Creating table: ", tableName t]
+  forM_ missing $ \t -> lift $ do
+    liftIO . T.putStrLn . mconcat $ ["Creating table: ", renderTableName $ tableName t]
     void . A.send . tableToCreate $ t
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
 
   forM_ (schemaTables schema) $ \t -> do
-    liftIO . T.putStrLn . mconcat $ ["Waiting for table: ", tableName t]
-    void . A.await D.tableExists . D.describeTable $ tableName t
-    x <- A.send . D.describeTable $ tableName t
+    liftIO . T.putStrLn . mconcat $ ["Waiting for table: ", renderTableName $ tableName t]
+    lift . void . A.await D.tableExists . D.describeTable . renderTableName $ tableName t
+    x <- lift . A.send . D.describeTable . renderTableName $ tableName t
     case x ^. D.drsTable of
       Nothing ->
-        -- table doesn't exist
-        fail "no table yo ~ invariant. await broken? :<"
+        left . InvariantMissingTable $ tableName t
       Just v -> do
         let
           checkRead = (v ^. D.tdProvisionedThroughput >>= view D.ptdReadCapacityUnits) /= Just (readThroughput $ tableThroughput t)
@@ -55,22 +63,22 @@ initialise schema = do
         -- update modes
         when (checkRead || checkWrite) $ do
           liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
-          void . A.send $ D.updateTable (tableName t) &
+          lift . void . A.send $ D.updateTable (renderTableName $ tableName t) &
             D.utProvisionedThroughput .~ Just (toThroughput $ tableThroughput t)
 
         -- failure modes
         when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
-          fail "schema key noobs"
+          left SchemaKeysMismatch
 
         when (v ^. D.tdAttributeDefinitions /= tableToAttributeDefintions t) $
-          fail "schema attribute noobs"
+          left SchemaAttributeMismatch
 
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
 
 destroy :: Schema -> AWS ()
 destroy schema =
   forM_ (schemaTables schema) $ \t -> do
-    liftIO . T.putStrLn . mconcat $ ["Deleting table: ", tableName t]
-    void . A.send . D.deleteTable $ tableName t
-    void . A.await D.tableNotExists . D.describeTable $ tableName t
+    liftIO . T.putStrLn . mconcat $ ["Deleting table: ", renderTableName $ tableName t]
+    void . A.send . D.deleteTable . renderTableName $ tableName t
+    void . A.await D.tableNotExists . D.describeTable . renderTableName $ tableName t
     liftIO . T.putStrLn . mconcat $ ["  ` done"]

@@ -13,6 +13,8 @@ import           Mismi (AWS, awsBracket)
 
 import           P
 
+import           X.Control.Monad.Trans.Either (eitherT)
+
 withClean :: Schema -> AWS () -> AWS a -> AWS a
 withClean e clean f =
-  awsBracket (initialise e) (const $ clean) (const $ clean >> f)
+  awsBracket (eitherT (fail . show) pure $ initialise e) (const $ clean) (const $ clean >> f)

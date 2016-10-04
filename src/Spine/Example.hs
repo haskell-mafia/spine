@@ -17,7 +17,7 @@ schema =
 
 table :: Table
 table =
-  Table "spine.local" kThing Nothing (Throughput 2 1)
+  Table (TableName "spine.local") kThing Nothing (Throughput 2 1)
 
 kThing :: Key Text
 kThing =
