@@ -1,0 +1,19 @@
+name:                  ambiata-spine-test
+version:               0.0.1
+cabal-version:         >= 1.8
+build-type:            Simple
+
+library
+  build-depends:
+                       base
+                     , ambiata-disorder-core
+                     , ambiata-p
+                     , ambiata-mismi-core
+                     , ambiata-mismi-core-test
+                     , ambiata-spine
+                     , ambiata-x-eithert
+                     , QuickCheck                      >= 2.8.2      && < 2.9
+
+
+  exposed-modules:
+                     Test.Spine.Schema
