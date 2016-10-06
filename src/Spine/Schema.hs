@@ -3,6 +3,7 @@
 {-# LANGUAGE GADTs #-}
 module Spine.Schema (
     InitialisationError (..)
+  , renderInitialisationError
   , initialise
   , destroy
   ) where
@@ -29,10 +30,20 @@ import           Spine.Data
 import           X.Control.Monad.Trans.Either (EitherT, left)
 
 data InitialisationError =
-    SchemaKeysMismatch
-  | SchemaAttributeMismatch
+    SchemaKeysMismatch TableName
+  | SchemaAttributeMismatch TableName
   | InvariantMissingTable TableName
     deriving (Eq, Show)
+
+renderInitialisationError :: InitialisationError -> Text
+renderInitialisationError i =
+  case i of
+    SchemaKeysMismatch t ->
+      mconcat ["The schema primary key names do not match for table [", renderTableName t, "]"]
+    SchemaAttributeMismatch t ->
+      mconcat ["The schema primary key types do not match for table [", renderTableName t, "]"]
+    InvariantMissingTable t ->
+      mconcat ["Spine invariant, the table [", renderTableName t, "] no longer exists."]
 
 initialise :: Schema -> EitherT InitialisationError AWS ()
 initialise schema = do
@@ -68,10 +79,10 @@ initialise schema = do
 
         -- failure modes
         when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
-          left SchemaKeysMismatch
+          left . SchemaKeysMismatch $ tableName t
 
         when (v ^. D.tdAttributeDefinitions /= tableToAttributeDefintions t) $
-          left SchemaAttributeMismatch
+          left . SchemaAttributeMismatch $ tableName t
 
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
 
