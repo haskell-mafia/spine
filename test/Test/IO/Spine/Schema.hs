@@ -32,28 +32,28 @@ prop_primary_key_failure = once . testAWS $ do
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ StringKey "spine-sort-key") testThroughput]
   b <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey-foo") (Just $ StringKey "spine-sort-key") testThroughput]
-  pure $ (a, b) === (Right (), Left SchemaKeysMismatch)
+  pure $ (a, b) === (Right (), Left $ SchemaKeysMismatch testTableName)
 
 prop_sort_key_failure = once . testAWS $ do
   a <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ StringKey "spine-sort-key") testThroughput]
   b <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ StringKey "spine-sort-key-foo") testThroughput]
-  pure $ (a, b) === (Right (), Left SchemaKeysMismatch)
+  pure $ (a, b) === (Right (), Left $ SchemaKeysMismatch testTableName)
 
 prop_primary_key_type_failure = once . testAWS $ do
   a <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ StringKey "spine-sort-key") testThroughput]
   b <- runEitherT . initialise $
     Schema [Table testTableName (IntKey "spine-pkey") (Just $ StringKey "spine-sort-key") testThroughput]
-  pure $ (a, b) === (Right (), Left SchemaAttributeMismatch)
+  pure $ (a, b) === (Right (), Left $ SchemaAttributeMismatch testTableName)
 
 prop_sort_key_type_failure = once . testAWS $ do
   a <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ StringKey "spine-sort-key") testThroughput]
   b <- runEitherT . initialise $
     Schema [Table testTableName (StringKey "spine-pkey") (Just $ IntKey "spine-sort-key") testThroughput]
-  pure $ (a, b) === (Right (), Left SchemaAttributeMismatch)
+  pure $ (a, b) === (Right (), Left $ SchemaAttributeMismatch testTableName)
 
 prop_idempotent = once . testAWS $ do
   let
