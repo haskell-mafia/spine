@@ -17,12 +17,17 @@ library
                      , ambiata-mismi-core
                      , ambiata-x-eithert
                      , amazonka-dynamodb               >= 1.3.6      && < 1.5
+                     , bytestring                      == 0.10.*
                      , conduit                         == 1.2.*
                      , containers                      == 0.5.*
                      , lens                            >= 4.8        && < 4.15
                      , semigroups                      >= 0.16       && < 0.19
                      , text                            == 1.2.*
+                     , time                            >= 1.4        && < 1.7
+                     , time-locale-compat              == 0.1.*
                      , transformers                    >= 0.4        && < 0.6
+                     , unordered-containers            == 0.2.*
+
 
   ghc-options:
                        -Wall

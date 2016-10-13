@@ -19,6 +19,6 @@ table :: Table
 table =
   Table (TableName "spine.local") kThing Nothing (Throughput 2 1)
 
-kThing :: Key Text
+kThing :: ItemKey Text
 kThing =
-  StringKey "thing"
+  ItemStringKey "thing"
