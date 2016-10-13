@@ -14,6 +14,7 @@ import           Control.Monad.Trans.Class (lift)
 
 import           Data.Conduit ((=$=), ($$))
 import qualified Data.Conduit.List as C
+import           Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Text.IO as T
 import qualified Data.Set as S
 
@@ -93,3 +94,52 @@ destroy schema =
     void . A.send . D.deleteTable . renderTableName $ tableName t
     void . A.await D.tableNotExists . D.describeTable . renderTableName $ tableName t
     liftIO . T.putStrLn . mconcat $ ["  ` done"]
+
+
+renderPartitionKey :: Table -> Text
+renderPartitionKey (Table _ p _ _) =
+  renderItemKey p
+
+renderSortKey :: Table -> Maybe Text
+renderSortKey (Table _ _ s _) =
+  renderItemKey <$> s
+
+partitionKeyType :: Table -> D.ScalarAttributeType
+partitionKeyType (Table _ p _ _) =
+  itemKeyType p
+
+sortKeyType :: Table -> Maybe D.ScalarAttributeType
+sortKeyType (Table _ _ s _) =
+  itemKeyType <$> s
+
+itemKeyType :: ItemKey a -> D.ScalarAttributeType
+itemKeyType a =
+  case a of
+    ItemIntKey _ ->
+      D.N
+    ItemStringKey _ ->
+      D.S
+    ItemBinaryKey _ ->
+      D.B
+
+tableToCreate :: Table -> D.CreateTable
+tableToCreate t =
+  D.createTable
+    (renderTableName $ tableName t)
+    (tableToSchemaElement t)
+    (D.provisionedThroughput (readThroughput $ tableThroughput t) (writeThroughput $ tableThroughput t))
+      & D.ctAttributeDefinitions .~ tableToAttributeDefintions t
+
+tableToSchemaElement :: Table -> NonEmpty D.KeySchemaElement
+tableToSchemaElement t =
+  D.keySchemaElement (renderPartitionKey t) D.Hash :| maybe [] (\x -> [D.keySchemaElement x D.Range]) (renderSortKey t)
+
+tableToAttributeDefintions :: Table -> [D.AttributeDefinition]
+tableToAttributeDefintions t = mconcat [
+    [D.attributeDefinition (renderPartitionKey t) (partitionKeyType t)]
+  , maybe [] (\(x, y) -> [D.attributeDefinition x y]) ((,) <$> renderSortKey t <*> sortKeyType t)
+  ]
+
+toThroughput :: Throughput -> D.ProvisionedThroughput
+toThroughput t =
+  D.provisionedThroughput (readThroughput t) (writeThroughput t)

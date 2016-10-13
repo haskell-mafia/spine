@@ -1,9 +1,11 @@
 import           Disorder.Core.Main
 
+import qualified Test.IO.Spine.Data as Data
 import qualified Test.IO.Spine.Schema as Schema
 
 main :: IO ()
 main =
   disorderMain [
-      Schema.tests
+      Data.tests
+    , Schema.tests
     ]
