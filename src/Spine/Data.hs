@@ -12,8 +12,10 @@ module Spine.Data (
   , renderKey
   , toEncoding
   , fromEncoding
+  , toItemEncoding
   , renderTime
   , parseTime
+  , renderItemKey
   ) where
 
 import           Data.ByteString (ByteString)
@@ -144,6 +146,16 @@ toEncoding k a =
     MapKey v ->
       (v, D.attributeValue & D.avM .~ a)
 
+toItemEncoding :: ItemKey a -> a -> (Text, D.AttributeValue)
+toItemEncoding i a =
+  case i of
+    ItemIntKey v ->
+      (v, D.attributeValue & D.avN .~ Just (renderIntegral a))
+    ItemStringKey v ->
+      (v, D.attributeValue & D.avS .~ Just a)
+    ItemBinaryKey v ->
+      (v, D.attributeValue & D.avB .~ Just a)
+
 renderTime :: UTCTime -> Text
 renderTime =
   T.pack . formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S"
@@ -151,3 +163,13 @@ renderTime =
 parseTime :: Text -> Maybe UTCTime
 parseTime =
   parseTimeM True defaultTimeLocale "%Y-%m-%dT%H:%M:%S" . T.unpack
+
+renderItemKey :: ItemKey a -> Text
+renderItemKey a =
+  case a of
+    ItemIntKey v ->
+      v
+    ItemStringKey v ->
+      v
+    ItemBinaryKey v ->
+      v

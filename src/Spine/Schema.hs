@@ -104,16 +104,6 @@ renderSortKey :: Table -> Maybe Text
 renderSortKey (Table _ _ s _) =
   renderItemKey <$> s
 
-renderItemKey :: ItemKey a -> Text
-renderItemKey a =
-  case a of
-    ItemIntKey v ->
-      v
-    ItemStringKey v ->
-      v
-    ItemBinaryKey v ->
-      v
-
 partitionKeyType :: Table -> D.ScalarAttributeType
 partitionKeyType (Table _ p _ _) =
   itemKeyType p

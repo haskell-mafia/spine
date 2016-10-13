@@ -5,14 +5,21 @@ build-type:            Simple
 
 library
   build-depends:
-                       base
-                     , ambiata-disorder-core
-                     , ambiata-p
-                     , ambiata-mismi-core
-                     , ambiata-mismi-core-test
-                     , ambiata-spine
-                     , ambiata-x-eithert
-                     , QuickCheck                      >= 2.8.2      && < 2.9
+                      base
+                    , ambiata-disorder-core
+                    , ambiata-disorder-corpus
+                    , ambiata-spine
+                    , ambiata-mismi-core
+                    , ambiata-mismi-core-test
+                    , ambiata-p
+                    , ambiata-x-eithert
+                    , amazonka-dynamodb               >= 1.3.6      && < 1.5
+                    , lens                            >= 4.8        && < 4.15
+                    , text
+                    , time                            >= 1.4        && < 1.7
+                    , transformers                    >= 0.4        && < 0.6
+                    , unordered-containers            == 0.2.*
+                    , QuickCheck                      >= 2.7      && < 2.9
 
 
   exposed-modules:

@@ -17,7 +17,7 @@ import           X.Control.Monad.Trans.Either (runEitherT)
 
 testTableName :: TableName
 testTableName =
-  TableName "spine.test"
+  TableName "spine.test.schema"
 
 testThroughput :: Throughput
 testThroughput =
