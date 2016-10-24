@@ -27,6 +27,8 @@ import qualified Data.Text as T
 import           Data.Time (UTCTime, parseTimeM, formatTime)
 import           Data.Time.Locale.Compat (defaultTimeLocale)
 
+import           GHC.Show (appPrec, appPrec1)
+
 import           Numeric.Natural (Natural)
 
 import           P
@@ -62,6 +64,27 @@ data ItemKey a where
   ItemStringKey :: Text -> ItemKey Text
   ItemBinaryKey :: Text -> ItemKey ByteString
 
+instance Eq (ItemKey a) where
+  (ItemIntKey k) == (ItemIntKey k') =
+    (k == k')
+  (ItemStringKey k) == (ItemStringKey k') =
+    (k == k')
+  (ItemBinaryKey k) == (ItemBinaryKey k') =
+    (k == k')
+  _ == _ =
+    False
+
+instance Show (ItemKey a) where
+  showsPrec p (ItemIntKey k) =
+    showParen (p > appPrec) $
+      showString "ItemIntKey " . showsPrec appPrec1 k
+  showsPrec p (ItemStringKey k) =
+    showParen (p > appPrec) $
+      showString "ItemStringKey " . showsPrec appPrec1 k
+  showsPrec p (ItemBinaryKey k) =
+    showParen (p > appPrec) $
+      showString "ItemBinaryKey " . showsPrec appPrec1 k
+
 data Key a where
   IntKey :: Text -> Key Int
   IntSetKey :: Text -> Key [Int]
@@ -73,6 +96,62 @@ data Key a where
   BoolKey :: Text -> Key Bool
   NullKey :: Text -> Key ()
   MapKey :: Text -> Key (HashMap Text D.AttributeValue)
+
+instance Eq (Key a) where
+  (IntKey k) == (IntKey k') =
+    (k == k')
+  (IntSetKey k) == (IntSetKey k') =
+    (k == k')
+  (StringKey k) == (StringKey k') =
+    (k == k')
+  (StringSetKey k) == (StringSetKey k') =
+    (k == k')
+  (BinaryKey k) == (BinaryKey k') =
+    (k == k')
+  (BinarySetKey k) == (BinarySetKey k') =
+    (k == k')
+  (TimeKey k) == (TimeKey k') =
+    (k == k')
+  (BoolKey k) == (BoolKey k') =
+    (k == k')
+  (NullKey k) == (NullKey k') =
+    (k == k')
+  (MapKey k) == (MapKey k') =
+    (k == k')
+  _ ==
+    _ = False
+
+instance Show (Key a) where
+  showsPrec p (IntKey k) =
+    showParen (p > appPrec) $
+      showString "IntKey " . showsPrec appPrec1 k
+  showsPrec p (IntSetKey k) =
+    showParen (p > appPrec) $
+      showString "IntSetKey " . showsPrec appPrec1 k
+  showsPrec p (StringKey k) =
+    showParen (p > appPrec) $
+      showString "StringKey " . showsPrec appPrec1 k
+  showsPrec p (StringSetKey k) =
+    showParen (p > appPrec) $
+      showString "StringSetKey " . showsPrec appPrec1 k
+  showsPrec p (BinaryKey k) =
+    showParen (p > appPrec) $
+      showString "BinaryKey " . showsPrec appPrec1 k
+  showsPrec p (BinarySetKey k) =
+    showParen (p > appPrec) $
+      showString "BinarySetKey " . showsPrec appPrec1 k
+  showsPrec p (TimeKey k) =
+    showParen (p > appPrec) $
+      showString "TimeKey " . showsPrec appPrec1 k
+  showsPrec p (BoolKey k) =
+    showParen (p > appPrec) $
+      showString "BoolKey " . showsPrec appPrec1 k
+  showsPrec p (NullKey k) =
+    showParen (p > appPrec) $
+      showString "NullKey " . showsPrec appPrec1 k
+  showsPrec p (MapKey k) =
+    showParen (p > appPrec) $
+      showString "MapKey " . showsPrec appPrec1 k
 
 renderKey :: Key a -> Text
 renderKey k =
