@@ -13,6 +13,7 @@ module Spine.Data (
   , toEncoding
   , fromEncoding
   , toItemEncoding
+  , fromItemEncoding
   , renderTime
   , parseTime
   , renderItemKey
@@ -224,6 +225,16 @@ toEncoding k a =
       (v, D.attributeValue & D.avNULL .~ Just True)
     MapKey v ->
       (v, D.attributeValue & D.avM .~ a)
+
+fromItemEncoding :: ItemKey a -> (HashMap Text D.AttributeValue) -> Maybe a
+fromItemEncoding k l =
+  case k of
+    ItemIntKey v ->
+      l ^? ix v . D.avN . _Just >>= readMaybe . T.unpack
+    ItemStringKey v ->
+      l ^? ix v . D.avS . _Just
+    ItemBinaryKey v ->
+      l ^? ix v . D.avB . _Just
 
 toItemEncoding :: ItemKey a -> a -> (Text, D.AttributeValue)
 toItemEncoding i a =
