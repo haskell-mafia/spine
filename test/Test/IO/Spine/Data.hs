@@ -37,7 +37,7 @@ testThroughput =
 
 item :: ItemKey Text
 item =
-  ItemStringKey "spine-pkey"
+  ItemStringKey "spinepkey"
 
 kInt :: Key Int
 kInt =
@@ -120,7 +120,8 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
           toItemEncoding item m
         ]
       & D.giProjectionExpression .~ Just (T.intercalate "," [
-          renderKey kInt
+          renderItemKey item
+        , renderKey kInt
         , renderKey kIntSet
         , renderKey kString
         , renderKey kStringSet
@@ -137,6 +138,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
       attrs :: A.HashMap Text D.AttributeValue
       attrs = r ^. D.girsItem
 
+    ri <- fromMaybeM (fail "item failed") $ fromItemEncoding item attrs
     rn <- fromMaybeM (fail "kInt failed") $ fromEncoding kInt attrs
     rns <- fromMaybeM (fail "kIntSet failed") $ fromEncoding kIntSet attrs
     rs <- fromMaybeM (fail "kString failed") $ fromEncoding kString attrs
@@ -149,9 +151,9 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
     rm <- fromMaybeM (fail "kMap failed") $ fromEncoding kMap attrs
 
     pure $
-      (rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt)
+      (ri, rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt)
       ===
-      (n, set, renderIntegral n, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt)
+      (m, n, set, renderIntegral n, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt)
 
 return []
 tests = $quickCheckAll
