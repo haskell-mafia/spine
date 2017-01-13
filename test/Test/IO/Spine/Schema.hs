@@ -21,7 +21,11 @@ testTableName =
 
 testThroughput :: Throughput
 testThroughput =
-  Throughput 1 1
+  let one = ThroughputRange 1 2 in Throughput one one
+
+testThroughputTwo :: Throughput
+testThroughputTwo =
+  let two = ThroughputRange 2 2 in Throughput two two
 
 prop_initialise_destroy = once . testAWS .
   withClean (Schema []) (pure ()) $
@@ -66,7 +70,7 @@ prop_throughput = once . testAWS $ do
   a <- runEitherT . initialise $
     Schema [Table testTableName (ItemStringKey "spine-pkey") (Just $ ItemStringKey "spine-sort-key") testThroughput]
   b <- runEitherT . initialise $
-    Schema [Table testTableName (ItemStringKey "spine-pkey") (Just $ ItemStringKey "spine-sort-key") $ Throughput 2 2]
+    Schema [Table testTableName (ItemStringKey "spine-pkey") (Just $ ItemStringKey "spine-sort-key") $ testThroughputTwo]
   pure $ (a, b) === (Right (), Right ())
 
 return []

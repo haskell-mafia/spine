@@ -69,14 +69,15 @@ initialise schema = do
         left . InvariantMissingTable $ tableName t
       Just v -> do
         let
-          checkRead = (v ^. D.tdProvisionedThroughput >>= view D.ptdReadCapacityUnits) /= Just (readThroughput $ tableThroughput t)
-          checkWrite = (v ^. D.tdProvisionedThroughput >>= view D.ptdWriteCapacityUnits) /= (Just . writeThroughput $ tableThroughput t)
+          throughput = tableThroughput t
+          checkRead = checkThroughput (v ^. D.tdProvisionedThroughput >>= view D.ptdReadCapacityUnits) (readThroughput throughput)
+          checkWrite = checkThroughput (v ^. D.tdProvisionedThroughput >>= view D.ptdWriteCapacityUnits) (writeThroughput throughput)
 
         -- update modes
-        when (checkRead || checkWrite) $ do
+        when ((not . isJustRight) checkRead || (not . isJustRight) checkWrite) $ do
           liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
           lift . void . A.send $ D.updateTable (renderTableName $ tableName t) &
-            D.utProvisionedThroughput .~ Just (toThroughput $ tableThroughput t)
+            D.utProvisionedThroughput .~ Just (toThroughput checkRead checkWrite)
 
         -- failure modes
         when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
@@ -127,7 +128,7 @@ tableToCreate t =
   D.createTable
     (renderTableName $ tableName t)
     (tableToSchemaElement t)
-    (D.provisionedThroughput (readThroughput $ tableThroughput t) (writeThroughput $ tableThroughput t))
+    (D.provisionedThroughput (minThroughput . readThroughput . tableThroughput $ t) (minThroughput . writeThroughput . tableThroughput $ t))
       & D.ctAttributeDefinitions .~ tableToAttributeDefintions t
 
 tableToSchemaElement :: Table -> NonEmpty D.KeySchemaElement
@@ -140,6 +141,6 @@ tableToAttributeDefintions t = mconcat [
   , maybe [] (\(x, y) -> [D.attributeDefinition x y]) ((,) <$> renderSortKey t <*> sortKeyType t)
   ]
 
-toThroughput :: Throughput -> D.ProvisionedThroughput
-toThroughput t =
-  D.provisionedThroughput (readThroughput t) (writeThroughput t)
+toThroughput :: ThroughputPorridge -> ThroughputPorridge -> D.ProvisionedThroughput
+toThroughput read write =
+  D.provisionedThroughput (desiredThroughput read) (desiredThroughput write)
