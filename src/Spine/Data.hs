@@ -308,9 +308,9 @@ desiredThroughput :: ThroughputPorridge -> Natural
 desiredThroughput porridge =
   case porridge of
     TooLow range ->
-      maxThroughput range
-    TooHigh range ->
       minThroughput range
+    TooHigh range ->
+      maxThroughput range
     JustRight v ->
       v
 
