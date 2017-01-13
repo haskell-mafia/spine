@@ -297,9 +297,12 @@ checkThroughput actual range =
       TooLow range
     Just v ->
       case v of
-        _ | v < minThroughput range -> TooLow range
-        _ | v > maxThroughput range -> TooHigh range
-        _ -> JustRight v
+        _ | v < minThroughput range ->
+          TooLow range
+        _ | v > maxThroughput range ->
+          TooHigh range
+        _ ->
+          JustRight v
 
 desiredThroughput :: ThroughputPorridge -> Natural
 desiredThroughput porridge =
