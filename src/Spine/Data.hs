@@ -6,7 +6,9 @@ module Spine.Data (
     Schema (..)
   , Table (..)
   , TableName (..)
+  , ThroughputPorridge (..)
   , Throughput (..)
+  , ThroughputRange (..)
   , ItemKey (..)
   , Key (..)
   , renderKey
@@ -17,6 +19,9 @@ module Spine.Data (
   , renderTime
   , parseTime
   , renderItemKey
+  , checkThroughput
+  , desiredThroughput
+  , isJustRight
   ) where
 
 import           Data.ByteString (ByteString)
@@ -54,10 +59,32 @@ newtype TableName =
       renderTableName :: Text
     } deriving (Eq, Show)
 
+
+
+data ThroughputPorridge =
+    TooLow ThroughputRange
+  | TooHigh ThroughputRange
+  | JustRight Natural
+    deriving (Eq, Show)
+
+-- |
+-- Throughput configures the table throughput but allows for external scaling
+-- events to be applied.
+--
+-- The expected semantics for throughput is that any table that has less than
+-- the minumum will be increased to the minimum, any table that has more than
+-- the maximum will be decreased to the maximum.
+--
 data Throughput =
   Throughput {
-      readThroughput :: Natural
-    , writeThroughput :: Natural
+      readThroughput :: ThroughputRange
+    , writeThroughput :: ThroughputRange
+    } deriving (Eq, Show)
+
+data ThroughputRange =
+  ThroughputRange {
+      minThroughput :: Natural
+    , maxThroughput :: Natural
     } deriving (Eq, Show)
 
 data ItemKey a where
@@ -263,3 +290,33 @@ renderItemKey a =
       v
     ItemBinaryKey v ->
       v
+checkThroughput :: Maybe Natural -> ThroughputRange -> ThroughputPorridge
+checkThroughput actual range =
+  case actual of
+    Nothing ->
+      TooLow range
+    Just v ->
+      case v of
+        _ | v < minThroughput range -> TooLow range
+        _ | v > maxThroughput range -> TooHigh range
+        _ -> JustRight v
+
+desiredThroughput :: ThroughputPorridge -> Natural
+desiredThroughput porridge =
+  case porridge of
+    TooLow range ->
+      maxThroughput range
+    TooHigh range ->
+      minThroughput range
+    JustRight v ->
+      v
+
+isJustRight :: ThroughputPorridge -> Bool
+isJustRight  porridge =
+  case porridge of
+    TooLow _ ->
+      False
+    TooHigh _ ->
+      False
+    JustRight _ ->
+      True

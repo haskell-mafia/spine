@@ -17,7 +17,7 @@ schema =
 
 table :: Table
 table =
-  Table (TableName "spine.local") kThing Nothing (Throughput 2 1)
+  Table (TableName "spine.local") kThing Nothing (Throughput (ThroughputRange 2 2) (ThroughputRange 1 1))
 
 kThing :: ItemKey Text
 kThing =

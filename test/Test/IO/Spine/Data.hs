@@ -33,7 +33,7 @@ testTableName =
 
 testThroughput :: Throughput
 testThroughput =
-  Throughput 1 1
+  let one = ThroughputRange 1 1 in Throughput one one
 
 item :: ItemKey Text
 item =
