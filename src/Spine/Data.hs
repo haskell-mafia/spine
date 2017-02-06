@@ -11,10 +11,13 @@ module Spine.Data (
   , ThroughputRange (..)
   , ItemKey (..)
   , Key (..)
+  , DecodeError (..)
   , renderKey
   , toEncoding
+  , fromEncoding_
   , fromEncoding
   , toItemEncoding
+  , fromItemEncoding_
   , fromItemEncoding
   , renderTime
   , parseTime
@@ -205,29 +208,58 @@ renderKey k =
     MapKey v ->
       v
 
-fromEncoding :: Key a -> (HashMap Text D.AttributeValue) -> Maybe a
+data DecodeError =
+    CouldNotDecodeInt Text
+  | CouldNotDecodeIntSet [Text]
+  | CouldNotDecodeTime Text
+    deriving (Eq, Show)
+
+fromEncoding_ :: Key a -> (HashMap Text D.AttributeValue) -> Maybe a
+fromEncoding_ k l =
+  case fromEncoding k l of
+    Left _ ->
+      Nothing
+    Right m ->
+      m
+
+fromEncoding :: Key a -> (HashMap Text D.AttributeValue) -> Either DecodeError (Maybe a)
 fromEncoding k l =
   case k of
-    IntKey v ->
-      l ^? ix v . D.avN . _Just >>= readMaybe . T.unpack
+    IntKey v -> do
+      case l ^? ix v . D.avN . _Just of
+        Nothing ->
+          pure Nothing
+        Just t ->
+          maybe (Left $ CouldNotDecodeInt t) (pure . pure) .
+            readMaybe . T.unpack $ t
     IntSetKey v ->
-      l ^? ix v . D.avNS >>= traverse (readMaybe . T.unpack)
+      case l ^? ix v . D.avNS of
+        Nothing ->
+          pure Nothing
+        Just ts ->
+          maybe (Left $ CouldNotDecodeIntSet ts) (pure . pure) $
+            traverse (readMaybe . T.unpack) ts
     StringKey v ->
-      l ^? ix v . D.avS . _Just
+      pure $ l ^? ix v . D.avS . _Just
     StringSetKey v ->
-      l ^? ix v . D.avSS
+      pure $ l ^? ix v . D.avSS
     BinaryKey v ->
-      l ^? ix v . D.avB . _Just
+      pure $ l ^? ix v . D.avB . _Just
     BinarySetKey v ->
-      l ^? ix v . D.avBS
+      pure $ l ^? ix v . D.avBS
     TimeKey v ->
-      l ^? ix v . D.avS . _Just >>= parseTime
+      case l ^? ix v . D.avS . _Just of
+        Nothing ->
+          pure Nothing
+        Just t ->
+          maybe (Left $ CouldNotDecodeTime t) (pure . pure) .
+            parseTime $ t
     BoolKey v ->
-      l ^? ix v . D.avBOOL . _Just
+      pure $ l ^? ix v . D.avBOOL . _Just
     NullKey v ->
-      l ^? ix v . D.avNULL . _Just >>= bool Nothing (Just ())
+      pure $ l ^? ix v . D.avNULL . _Just >>= bool Nothing (Just ())
     MapKey v ->
-      l ^? ix v . D.avM
+      pure $ l ^? ix v . D.avM
 
 toEncoding :: Key a -> a -> (Text, D.AttributeValue)
 toEncoding k a =
@@ -253,15 +285,29 @@ toEncoding k a =
     MapKey v ->
       (v, D.attributeValue & D.avM .~ a)
 
-fromItemEncoding :: ItemKey a -> (HashMap Text D.AttributeValue) -> Maybe a
+
+fromItemEncoding_ :: ItemKey a -> (HashMap Text D.AttributeValue) -> Maybe a
+fromItemEncoding_ k l =
+  case fromItemEncoding k l of
+    Left _ ->
+      Nothing
+    Right m ->
+      m
+
+fromItemEncoding :: ItemKey a -> (HashMap Text D.AttributeValue) -> Either DecodeError (Maybe a)
 fromItemEncoding k l =
   case k of
     ItemIntKey v ->
-      l ^? ix v . D.avN . _Just >>= readMaybe . T.unpack
+      case l ^? ix v . D.avN . _Just of
+        Nothing ->
+          pure Nothing
+        Just t ->
+          maybe (Left $ CouldNotDecodeInt t) (pure . pure) .
+            readMaybe . T.unpack $ t
     ItemStringKey v ->
-      l ^? ix v . D.avS . _Just
+      pure $ l ^? ix v . D.avS . _Just
     ItemBinaryKey v ->
-      l ^? ix v . D.avB . _Just
+      pure $ l ^? ix v . D.avB . _Just
 
 toItemEncoding :: ItemKey a -> a -> (Text, D.AttributeValue)
 toItemEncoding i a =
