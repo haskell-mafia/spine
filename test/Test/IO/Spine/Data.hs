@@ -51,6 +51,10 @@ kString :: Key Text
 kString =
   StringKey "textx"
 
+kStringTime :: Key UTCTime
+kStringTime =
+  TimeKey "textx"
+
 kStringSet :: Key [Text]
 kStringSet =
   StringSetKey "textsetx"
@@ -97,6 +101,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
       set = [n, n + 1]
       bytes = T.encodeUtf8 m
       mapp = H.fromList [toEncoding kInt n, toEncoding kString (renderIntegral n)]
+      s = renderIntegral n
 
     -- put items
     void . A.send $ D.putItem (renderTableName testTableName)
@@ -104,7 +109,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
           toItemEncoding item m
         , toEncoding kInt n
         , toEncoding kIntSet set
-        , toEncoding kString (renderIntegral n)
+        , toEncoding kString s
         , toEncoding kStringSet (fmap renderIntegral set)
         , toEncoding kBinary bytes
         , toEncoding kBinarySet [bytes]
@@ -138,22 +143,34 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
       attrs :: A.HashMap Text D.AttributeValue
       attrs = r ^. D.girsItem
 
-    ri <- fromMaybeM (fail "item failed") $ fromItemEncoding item attrs
-    rn <- fromMaybeM (fail "kInt failed") $ fromEncoding kInt attrs
-    rns <- fromMaybeM (fail "kIntSet failed") $ fromEncoding kIntSet attrs
-    rs <- fromMaybeM (fail "kString failed") $ fromEncoding kString attrs
-    rss <- fromMaybeM (fail "kStringSet failed") $ fromEncoding kStringSet attrs
-    rby <- fromMaybeM (fail "kBinary failed") $ fromEncoding kBinary attrs
-    rbys <- fromMaybeM (fail "kBinarySet failed") $ fromEncoding kBinarySet attrs
-    rb <- fromMaybeM (fail "kBool failed") $ fromEncoding kBool attrs
-    rt <- fromMaybeM (fail "kTime failed") $ fromEncoding kTime attrs
-    ru <- fromMaybeM (fail "kNull failed") $ fromEncoding kNull attrs
-    rm <- fromMaybeM (fail "kMap failed") $ fromEncoding kMap attrs
+      handler name e =
+        case e of
+          Left d ->
+            fail $ "[" <> name <> "] decode error: " <> show d
+          Right Nothing ->
+            fail $ "[" <> name <> "] missing."
+          Right (Just a) ->
+            pure a
+
+    ri <- handler "item" $ fromItemEncoding item attrs
+    rn <- handler "kInt" $ fromEncoding kInt attrs
+    rns <- handler "kIntSet" $ fromEncoding kIntSet attrs
+    rs <- handler "kString" $ fromEncoding kString attrs
+    rss <- handler "kStringSet" $ fromEncoding kStringSet attrs
+    rby <- handler "kBinary" $ fromEncoding kBinary attrs
+    rbys <- handler "kBinarySet" $ fromEncoding kBinarySet attrs
+    rb <- handler "kBool" $ fromEncoding kBool attrs
+    rt <- handler "kTime" $ fromEncoding kTime attrs
+    ru <- handler "kNull" $ fromEncoding kNull attrs
+    rm <- handler "kMap" $ fromEncoding kMap attrs
+
+    let
+      decode = fromEncoding kStringTime attrs
 
     pure $
-      (ri, rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt)
+      (ri, rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt, decode)
       ===
-      (m, n, set, renderIntegral n, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt)
+      (m, n, set, s, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt, Left $ CouldNotDecodeTime s)
 
 return []
 tests = $quickCheckAll
