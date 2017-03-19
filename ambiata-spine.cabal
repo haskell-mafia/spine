@@ -38,7 +38,27 @@ library
   exposed-modules:
                        Spine.Data
                        Spine.Example
+                       Spine.Memory
                        Spine.Schema
+
+test-suite test
+  type:                exitcode-stdio-1.0
+
+  main-is:             test.hs
+
+  ghc-options:         -Wall -threaded -O2
+
+  hs-source-dirs:
+                       test
+
+  build-depends:
+                       base                            >= 3          && < 5
+                     , ambiata-spine
+                     , ambiata-disorder-core
+                     , ambiata-disorder-corpus
+                     , ambiata-p
+                     , QuickCheck                      >= 2.8.2      && < 2.9
+                     , quickcheck-instances            == 0.3.*
 
 test-suite test-io
   type:
