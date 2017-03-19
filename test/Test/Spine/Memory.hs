@@ -12,6 +12,7 @@ import           P
 import           Spine.Data
 import           Spine.Memory
 
+import           Test.Spine.Arbitrary ()
 import           Test.QuickCheck
 
 g :: ItemKey Text
@@ -58,25 +59,25 @@ prop_put_overwrite = forAll (elements simpsons) $ \v ->
     r <- get state v
     pure $ r === Just [Attribute ki 10]
 
-prop_put'_ok = forAll (elements simpsons) $ \v ->
+prop_put_with_ok = forAll (elements simpsons) $ \v ->
   testIO $ do
     state <- newTableState g
     put state v (Attribute k v)
-    r <- put' state v (Attribute k v) (Exists k)
+    r <- putWith state v (Attribute k v) (Exists k)
     pure $ r === True
 
-prop_put'_fail = forAll (elements simpsons) $ \v ->
+prop_put_with_fail = forAll (elements simpsons) $ \v ->
   testIO $ do
     state <- newTableState g
     put state v (Attribute k v)
-    r <- put' state v (Attribute k v) (NotExists k)
+    r <- putWith state v (Attribute k v) (NotExists k)
     pure $ r === False
 
-prop_update'_contains_ok = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
+prop_update_with_contains_ok = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
   testIO $ do
     state <- newTableState g
     put state s (Attribute ks [s])
-    r <- update' state s [Attribute ks [m]] (Contains ks [s])
+    r <- updateWith state s [Attribute ks [m]] (Contains ks [s])
     z <- get state s
     pure $ (r, z) === (True, Just [Attribute ks [s, m]])
 
@@ -84,15 +85,15 @@ prop_update'_notcontains_ok = forAll ((,) <$> elements simpsons <*> elements mup
   testIO $ do
     state <- newTableState g
     put state s (Attribute ks [s])
-    r <- update' state s [Attribute ks [m]] (NotContains ks [m])
+    r <- updateWith state s [Attribute ks [m]] (NotContains ks [m])
     z <- get state s
     pure $ (r, z) === (True, Just [Attribute ks [s, m]])
 
-prop_set'_notcontains_fail = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
+prop_set_with_notcontains_fail = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
   testIO $ do
     state <- newTableState g
     put state s (Attribute ks [s])
-    r <- set' state s [Attribute ks [m]] (NotContains ks [s])
+    r <- setWith state s [Attribute ks [m]] (NotContains ks [s])
     pure $ r === False
 
 prop_delete = forAll (elements simpsons) $ \v ->
@@ -144,19 +145,19 @@ prop_set_delete_multi = forAll ((,) <$> elements simpsons <*> elements muppets) 
     r <- get state s
     pure $ r === Just [Attribute (StringSetKey "test2") [m], Attribute k s, Attribute ks [s]]
 
-prop_set'_value = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
+prop_set_with_value = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
   testIO $ do
     state <- newTableState g
     put state s (Attribute k s)
-    z <- set' state s [Attribute k m] (ExistsValue k s)
+    z <- setWith state s [Attribute k m] (ExistsValue k s)
     r <- get state s
     pure $ (z, r) === (True, Just [Attribute k m])
 
-prop_set'_value_fail = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
+prop_set_with_value_fail = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
   testIO $ do
     state <- newTableState g
     put state s (Attribute k s)
-    z <- set' state s [Attribute k m] (ExistsValue k m)
+    z <- setWith state s [Attribute k m] (ExistsValue k m)
     r <- get state s
     pure $ (z, r) === (False, Just [Attribute k s])
 
