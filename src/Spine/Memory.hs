@@ -7,6 +7,7 @@ module Spine.Memory (
     TableState (..)
   , Attribute (..)
   , Conditional (..)
+  , cast
   , lookupValue
   , newTableState
   , handle
@@ -82,6 +83,8 @@ cast (Attribute k v) key =
     (BoolKey _, BoolKey _) ->
       Just v
     (NullKey _, NullKey _) ->
+      Just v
+    (MapKey _, MapKey _) ->
       Just v
     _ ->
       Nothing
