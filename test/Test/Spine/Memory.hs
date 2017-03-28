@@ -15,6 +15,9 @@ import           Spine.Memory
 import           Test.Spine.Arbitrary ()
 import           Test.QuickCheck
 
+prop_cast a@(Attribute key _) =
+  isJust (cast a key) === True
+
 g :: ItemKey Text
 g =
   ItemStringKey "item.test"
