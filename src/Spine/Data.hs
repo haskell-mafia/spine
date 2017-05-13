@@ -29,7 +29,7 @@ module Spine.Data (
 
 import           Data.ByteString (ByteString)
 
-import           Control.Lens ((.~), (^?), ix, _Just)
+import           Control.Lens ((.~), (^?), (^.), ix, _Just)
 
 import           Data.HashMap.Strict (HashMap)
 import qualified Data.Text as T
@@ -121,12 +121,14 @@ data Key a where
   IntSetKey :: Text -> Key [Int]
   StringKey :: Text -> Key Text
   StringSetKey :: Text -> Key [Text]
+  StringListKey :: Text -> Key [Text]
   BinaryKey :: Text -> Key ByteString
   BinarySetKey :: Text -> Key [ByteString]
   TimeKey :: Text -> Key UTCTime
   BoolKey :: Text -> Key Bool
   NullKey :: Text -> Key ()
   MapKey :: Text -> Key (HashMap Text D.AttributeValue)
+
 
 instance Eq (Key a) where
   (IntKey k) == (IntKey k') =
@@ -136,6 +138,8 @@ instance Eq (Key a) where
   (StringKey k) == (StringKey k') =
     (k == k')
   (StringSetKey k) == (StringSetKey k') =
+    (k == k')
+  (StringListKey k) == (StringListKey k') =
     (k == k')
   (BinaryKey k) == (BinaryKey k') =
     (k == k')
@@ -165,6 +169,9 @@ instance Show (Key a) where
   showsPrec p (StringSetKey k) =
     showParen (p > appPrec) $
       showString "StringSetKey " . showsPrec appPrec1 k
+  showsPrec p (StringListKey k) =
+    showParen (p > appPrec) $
+      showString "StringListKey " . showsPrec appPrec1 k
   showsPrec p (BinaryKey k) =
     showParen (p > appPrec) $
       showString "BinaryKey " . showsPrec appPrec1 k
@@ -194,6 +201,8 @@ renderKey k =
     StringKey v ->
       v
     StringSetKey v ->
+      v
+    StringListKey v ->
       v
     BinaryKey v ->
       v
@@ -243,6 +252,9 @@ fromEncoding k l =
       pure $ l ^? ix v . D.avS . _Just
     StringSetKey v ->
       pure $ l ^? ix v . D.avSS
+    StringListKey v -> pure $ do
+       xs <- (l ^? ix v . D.avL)
+       forM xs $ \x -> x ^. D.avS
     BinaryKey v ->
       pure $ l ^? ix v . D.avB . _Just
     BinarySetKey v ->
@@ -272,6 +284,8 @@ toEncoding k a =
       (v, D.attributeValue & D.avS .~ Just a)
     StringSetKey v ->
       (v, D.attributeValue & D.avSS .~ a)
+    StringListKey v ->
+      (v, D.attributeValue & D.avL .~ fmap (\x -> D.attributeValue & D.avS .~ Just x) a)
     BinaryKey v ->
       (v, D.attributeValue & D.avB .~ Just a)
     BinarySetKey v ->
