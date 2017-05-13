@@ -74,6 +74,8 @@ cast (Attribute k v) key =
       Just v
     (StringSetKey _, StringSetKey _) ->
       Just v
+    (StringListKey _, StringListKey _) ->
+      Just v
     (BinaryKey _, BinaryKey _) ->
       Just v
     (BinarySetKey _, BinarySetKey _) ->

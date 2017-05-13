@@ -83,6 +83,10 @@ kMap :: Key (H.HashMap Text D.AttributeValue)
 kMap =
   MapKey "mapx"
 
+kList :: Key [Text]
+kList =
+  StringListKey "listx"
+
 schema :: Schema
 schema =
   Schema [Table testTableName item Nothing testThroughput]
@@ -102,6 +106,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
       bytes = T.encodeUtf8 m
       mapp = H.fromList [toEncoding kInt n, toEncoding kString (renderIntegral n)]
       s = renderIntegral n
+      listt = [s, s, renderIntegral $ n + 1, s]
 
     -- put items
     void . A.send $ D.putItem (renderTableName testTableName)
@@ -117,6 +122,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
         , toEncoding kBool b
         , toEncoding kNull ()
         , toEncoding kMap mapp
+        , toEncoding kList listt
         ]
 
     -- get items
@@ -136,6 +142,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
         , renderKey kBool
         , renderKey kNull
         , renderKey kMap
+        , renderKey kList
         ])
       & D.giConsistentRead .~ Just False
 
@@ -163,14 +170,15 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
     rt <- handler "kTime" $ fromEncoding kTime attrs
     ru <- handler "kNull" $ fromEncoding kNull attrs
     rm <- handler "kMap" $ fromEncoding kMap attrs
+    rl <- handler "kList" $ fromEncoding kList attrs
 
     let
       decode = fromEncoding kStringTime attrs
 
     pure $
-      (ri, rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt, decode)
+      (ri, rn, rns, rs, rss, rby, rbys, rb, ru, rm, rt, decode, rl)
       ===
-      (m, n, set, s, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt, Left $ CouldNotDecodeTime s)
+      (m, n, set, s, fmap renderIntegral set, bytes, [bytes], b, (), mapp, rt, Left $ CouldNotDecodeTime s, listt)
 
 return []
 tests = $quickCheckAll
