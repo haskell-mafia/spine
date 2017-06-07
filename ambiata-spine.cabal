@@ -36,6 +36,7 @@ library
                        src
 
   exposed-modules:
+                       Spine.Batch
                        Spine.Data
                        Spine.Example
                        Spine.Memory

@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE BangPatterns #-}
 module Spine.Data (
     Schema (..)
   , Table (..)
