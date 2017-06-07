@@ -83,7 +83,10 @@ initialise schema = do
         when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
           left . SchemaKeysMismatch $ tableName t
 
-        when (v ^. D.tdAttributeDefinitions /= tableToAttributeDefintions t) $
+        let
+          sortit xs = sortOn (view D.adAttributeName) xs
+
+        when ((sortit $ v ^. D.tdAttributeDefinitions) /= (sortit $ tableToAttributeDefintions t)) $
           left . SchemaAttributeMismatch $ tableName t
 
     liftIO . T.putStrLn . mconcat $ ["  ` done"]

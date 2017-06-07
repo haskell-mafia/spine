@@ -350,6 +350,7 @@ renderItemKey a =
       v
     ItemBinaryKey v ->
       v
+
 checkThroughput :: Maybe Natural -> ThroughputRange -> ThroughputPorridge
 checkThroughput actual range =
   case actual of

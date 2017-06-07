@@ -19,13 +19,23 @@ testTableName :: TableName
 testTableName =
   TableName "spine.test.schema"
 
+testTableNameTwo :: TableName
+testTableNameTwo =
+  TableName "spine.test.schema.two"
+
 testThroughput :: Throughput
 testThroughput =
-  let one = ThroughputRange 1 2 in Throughput one one
+  let
+    one = ThroughputRange 1 2
+  in
+    Throughput one one
 
 testThroughputTwo :: Throughput
 testThroughputTwo =
-  let two = ThroughputRange 2 2 in Throughput two two
+  let
+    two = ThroughputRange 2 2
+  in
+    Throughput two two
 
 prop_initialise_destroy = once . testAWS .
   withClean (Schema []) (pure ()) $
@@ -58,6 +68,13 @@ prop_sort_key_type_failure = once . testAWS $ do
   b <- runEitherT . initialise $
     Schema [Table testTableName (ItemStringKey "spine-pkey") (Just $ ItemIntKey "spine-sort-key") testThroughput]
   pure $ (a, b) === (Right (), Left $ SchemaAttributeMismatch testTableName)
+
+prop_attribute_mismatch_order = once . testAWS $ do
+  a <- runEitherT . initialise $
+    Schema [Table testTableNameTwo (ItemStringKey "spine-b") (Just $ ItemStringKey "spine-a") testThroughput]
+  b <- runEitherT . initialise $
+    Schema [Table testTableNameTwo (ItemStringKey "spine-b") (Just $ ItemStringKey "spine-a") testThroughput]
+  pure $ (a, b) === (Right (), Right ())
 
 prop_idempotent = once . testAWS $ do
   let
