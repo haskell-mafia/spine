@@ -59,6 +59,10 @@ kStringSet :: Key [Text]
 kStringSet =
   StringSetKey "textsetx"
 
+kStringEmptySet :: Key [Text]
+kStringEmptySet =
+  StringSetKey "textsetx_empty"
+
 kBinary :: Key A.ByteString
 kBinary =
   BinaryKey "binaryx"
@@ -110,7 +114,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
 
     -- put items
     void . A.send $ D.putItem (renderTableName testTableName)
-      & D.piItem .~ H.fromList [
+      & D.piItem .~ H.fromList ([
           toItemEncoding item m
         , toEncoding kInt n
         , toEncoding kIntSet set
@@ -123,7 +127,7 @@ prop_encodings n b = forAll (elements muppets) $ \m ->
         , toEncoding kNull ()
         , toEncoding kMap mapp
         , toEncoding kList listt
-        ]
+        ] <> toValidSetEncoding kStringEmptySet [])
 
     -- get items
     r <- A.send $ D.getItem (renderTableName testTableName)

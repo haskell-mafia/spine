@@ -14,6 +14,7 @@ module Spine.Data (
   , DecodeError (..)
   , renderKey
   , toEncoding
+  , toValidSetEncoding
   , fromEncoding_
   , fromEncoding
   , toItemEncoding
@@ -299,6 +300,29 @@ toEncoding k a =
     MapKey v ->
       (v, D.attributeValue & D.avM .~ a)
 
+toValidSetEncoding :: Key [a] -> [a] -> [(Text, D.AttributeValue)]
+toValidSetEncoding k a =
+  let
+    check x f =
+      case x of
+        [] ->
+          []
+        _ ->
+          f
+  in
+    case k of
+      IntSetKey v ->
+        check a $
+          [(v, D.attributeValue & D.avNS .~ (fmap renderIntegral a))]
+      StringSetKey v ->
+        check a $
+          [(v, D.attributeValue & D.avSS .~ a)]
+      StringListKey v ->
+        check a $
+          [(v, D.attributeValue & D.avL .~ fmap (\x -> D.attributeValue & D.avS .~ Just x) a)]
+      BinarySetKey v ->
+        check a $
+          [(v, D.attributeValue & D.avBS .~ a)]
 
 fromItemEncoding_ :: ItemKey a -> (HashMap Text D.AttributeValue) -> Maybe a
 fromItemEncoding_ k l =
