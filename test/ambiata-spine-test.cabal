@@ -19,7 +19,7 @@ library
                     , time                            >= 1.4        && < 1.7
                     , transformers                    >= 0.4        && < 0.6
                     , unordered-containers            == 0.2.*
-                    , QuickCheck                      >= 2.7      && < 2.9
+                    , QuickCheck                      >= 2.7        && < 2.10
 
 
   exposed-modules:
