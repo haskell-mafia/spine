@@ -20,3 +20,17 @@
   CACHE = "true"
   HADDOCK = "true"
   HADDOCK_S3 = "$AMBIATA_HADDOCK_BRANCHES"
+
+[build.dist-8-0]
+  GHC_VERSION = "8.0.1"
+  CABAL_VERSION = "1.24.0.0"
+  CACHE = "true"
+  HADDOCK = "true"
+  HADDOCK_S3 = "$AMBIATA_HADDOCK_MASTER"
+
+[build.branches-8-0]
+  GHC_VERSION = "8.0.1"
+  CABAL_VERSION = "1.24.0.0"
+  CACHE = "true"
+  HADDOCK = "true"
+  HADDOCK_S3 = "$AMBIATA_HADDOCK_BRANCHES"
