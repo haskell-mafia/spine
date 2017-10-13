@@ -125,12 +125,12 @@ handle as cond =
       not . handle as $ Contains k vs
 
 
-put :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> Attribute -> m ()
+put :: (MonadIO m, Ord a) => TableState a -> a -> Attribute -> m ()
 put state key attr =
   liftIO . atomicModifyIORef' (tableState state) $ \s ->
     (H.insert key [attr] s, ())
 
-putWith :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> Attribute -> Conditional -> m Bool
+putWith :: (MonadIO m, Ord a) => TableState a -> a -> Attribute -> Conditional -> m Bool
 putWith t p a cond =
   alter t p $ \m ->
     case m of
@@ -148,12 +148,12 @@ putWith t p a cond =
             (Just $ a : xs, True)
 
 
-delete :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> m ()
+delete :: (MonadIO m, Ord a) => TableState a -> a -> m ()
 delete state key =
   liftIO . atomicModifyIORef' (tableState state) $ \s ->
     (H.delete key s, ())
 
-deleteFromSet :: (MonadIO m, Ord a, Eq a, Eq b, Show b) => TableState a -> a -> Key [b] -> b -> m ()
+deleteFromSet :: (MonadIO m, Ord a, Eq b, Show b) => TableState a -> a -> Key [b] -> b -> m ()
 deleteFromSet state key k v =
   alter_ state key $ \m ->
     with m $ \l ->
@@ -168,7 +168,7 @@ deleteFromSet state key k v =
               Just bs ->
                 (Attribute k $ L.filter (\b -> not $ b == v) bs)
 
-set :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> [Attribute] -> m ()
+set :: (MonadIO m, Ord a) => TableState a -> a -> [Attribute] -> m ()
 set t p as =
   alter_ t p $ \m ->
     case m of
@@ -177,7 +177,7 @@ set t p as =
       Just l ->
         Just $ runSets as l
 
-setWith :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> [Attribute] -> Conditional -> m Bool
+setWith :: (MonadIO m, Ord a) => TableState a -> a -> [Attribute] -> Conditional -> m Bool
 setWith t p as cond =
   alter t p $ \m ->
     case m of
@@ -231,7 +231,7 @@ runUpdate a@(Attribute k v) l =
           _ ->
             a : l'
 
-updateWith :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> [Attribute] -> Conditional -> m Bool
+updateWith :: (MonadIO m, Ord a) => TableState a -> a -> [Attribute] -> Conditional -> m Bool
 updateWith t p as cond =
   alter t p $ \m ->
     case m of
@@ -248,12 +248,12 @@ updateWith t p as cond =
           True ->
             (Just $ runUpdates as xs, True)
 
-alter_ :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> (Maybe [Attribute] -> Maybe [Attribute]) -> m ()
+alter_ :: (MonadIO m, Ord a) => TableState a -> a -> (Maybe [Attribute] -> Maybe [Attribute]) -> m ()
 alter_ state key op =
   liftIO . atomicModifyIORef' (tableState state) $ \s ->
     (H.alter op key s, ())
 
-alter :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> (Maybe [Attribute] -> (Maybe [Attribute], b)) -> m b
+alter :: (MonadIO m, Ord a) => TableState a -> a -> (Maybe [Attribute] -> (Maybe [Attribute], b)) -> m b
 alter state key op =
   liftIO . atomicModifyIORef' (tableState state) $ \s ->
     case op (H.lookup key s) of
@@ -262,12 +262,12 @@ alter state key op =
       (Just v, b) ->
         (H.insert key v s, b)
 
-get :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> m (Maybe [Attribute])
+get :: (MonadIO m, Ord a) => TableState a -> a -> m (Maybe [Attribute])
 get state key = do
   h <- liftIO $ readIORef (tableState state)
   pure $ H.lookup key h
 
-getAttribute :: (MonadIO m, Ord a, Eq a) => TableState a -> a -> Key b -> m (Maybe b)
+getAttribute :: (MonadIO m, Ord a) => TableState a -> a -> Key b -> m (Maybe b)
 getAttribute state key k = do
   with (get state key) $ \m ->
     m >>=

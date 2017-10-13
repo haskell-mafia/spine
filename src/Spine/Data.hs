@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP #-}
 module Spine.Data (
     Schema (..)
   , Table (..)
@@ -99,13 +99,17 @@ data ItemKey a where
 
 instance Eq (ItemKey a) where
   (ItemIntKey k) == (ItemIntKey k') =
-    (k == k')
+    k == k'
   (ItemStringKey k) == (ItemStringKey k') =
-    (k == k')
+    k == k'
   (ItemBinaryKey k) == (ItemBinaryKey k') =
-    (k == k')
+    k == k'
+#if __GLASGOW_HASKELL__ <= 710
   _ == _ =
     False
+#endif
+
+
 
 instance Show (ItemKey a) where
   showsPrec p (ItemIntKey k) =
