@@ -27,6 +27,7 @@ library
                      , time-locale-compat              == 0.1.*
                      , transformers                    >= 0.4        && < 0.6
                      , unordered-containers            == 0.2.*
+                     , these                           == 0.7.*
 
 
   ghc-options:
