@@ -93,7 +93,7 @@ kList =
 
 schema :: Schema
 schema =
-  Schema [Table testTableName item Nothing testThroughput]
+  Schema [Table testTableName item Nothing [] testThroughput]
 
 delete :: Text -> A.AWS ()
 delete t =

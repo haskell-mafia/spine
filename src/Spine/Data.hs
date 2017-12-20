@@ -3,10 +3,14 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module Spine.Data (
     Schema (..)
   , Table (..)
   , TableName (..)
+  , IndexName (..)
+  , SecondaryIndex (..)
+  , Projection (..)
   , ThroughputPorridge (..)
   , Throughput (..)
   , ThroughputRange (..)
@@ -29,10 +33,9 @@ module Spine.Data (
   , isJustRight
   ) where
 
-import           Data.ByteString (ByteString)
-
 import           Control.Lens ((.~), (^?), (^.), ix, _Just)
 
+import           Data.ByteString (ByteString)
 import           Data.HashMap.Strict (HashMap)
 import qualified Data.Text as T
 import           Data.Time (UTCTime, parseTimeM, formatTime)
@@ -56,6 +59,7 @@ data Table = forall a b.
       tableName :: TableName
     , tablePartitionKey :: ItemKey a
     , tableSortKey :: Maybe (ItemKey b)
+    , tableGlobalSecondaryIndexes :: [SecondaryIndex]
     , tableThroughput :: Throughput
     }
 
@@ -64,7 +68,27 @@ newtype TableName =
       renderTableName :: Text
     } deriving (Eq, Show)
 
+newtype IndexName =
+  IndexName {
+      renderIndexName :: Text
+    } deriving (Eq, Show)
 
+data SecondaryIndex = forall a.
+  SecondaryIndex {
+      indexName :: IndexName
+    , indexPrimaryKey :: ItemKey a
+    , indexProjection :: Maybe Projection
+    , indexThroughput :: Throughput
+    }
+
+deriving instance Show SecondaryIndex
+
+data Projection = forall a.
+  Projection {
+      projectionAttributes :: [Key a]
+    }
+
+deriving instance Show Projection
 
 data ThroughputPorridge =
     TooLow ThroughputRange
