@@ -215,7 +215,6 @@ tableToGlobalSecondaryIndexes t =
       (maybe (D.projection & D.pProjectionType .~ Just D.KeysOnly) toProjection p)
       (D.provisionedThroughput (minThroughput . readThroughput $ th) (minThroughput . writeThroughput $ th))
 
-
 toProjection :: Projection -> D.Projection
 toProjection (Projection attributes) =
   D.projection
@@ -279,7 +278,7 @@ updateGlobalSecondayIndexes t indexes = do
 
   -- Create
   forM_ (These.catThat these) $ \s -> do
-    liftIO . T.putStrLn . mconcat $ ["  ` creating global secondary indexes for tabel: ", renderTableName $ tableName t]
+    liftIO . T.putStrLn . mconcat $ ["  ` creating global secondary: ", renderIndexName $ indexName s]
     void . A.await indexExists $ D.updateTable (renderTableName $ tableName t)
       & D.utAttributeDefinitions .~ tableToAttributeDefintions t
       & D.utGlobalSecondaryIndexUpdates .~ [

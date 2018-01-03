@@ -153,7 +153,15 @@ prop_secondary_compat = once . testAWS $ do
         (Just $ ItemStringKey "spine-sort-key")
         [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughputTwo]
         testThroughputTwo]
-  pure $ (a, b, c) === (Right (), Right (), Right ())
+  d <- runEitherT . initialise $
+    Schema [
+      Table
+        testTableNameFour
+        (ItemStringKey "spine-pkey")
+        (Just $ ItemStringKey "spine-sort-key")
+        [SecondaryIndex (IndexName "spine-index2") (ItemStringKey "spine-b") Nothing (Just $ Projection [StringKey "fred"]) testThroughput]
+        testThroughputTwo]
+  pure $ (a, b, c, d) === (Right (), Right (), Right (), Right ())
 
 prop_secondary_index_sort_key = once . testAWS $ do
   a <- runEitherT . initialise $
