@@ -296,7 +296,7 @@ updateGlobalSecondayIndexes t indexes = do
 
     when ((not . isJustRight) checkIndexRead || (not . isJustRight) checkIndexWrite) $ do
       liftIO . T.putStrLn . mconcat $ ["  ` updating global secondary index throughput"]
-      void . A.send $ D.updateTable (renderTableName $ tableName t)
+      void . A.await indexExists $ D.updateTable (renderTableName $ tableName t)
         & D.utAttributeDefinitions .~ tableToAttributeDefintions t
         & D.utGlobalSecondaryIndexUpdates .~ [
             D.globalSecondaryIndexUpdate & D.gsiuUpdate .~ Just (
