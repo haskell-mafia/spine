@@ -199,19 +199,19 @@ keySchemaElement a b =
 
 
 tableToCreateGlobalSecondaryIndexAction :: SecondaryIndex -> D.CreateGlobalSecondaryIndexAction
-tableToCreateGlobalSecondaryIndexAction (SecondaryIndex i k p th) =
+tableToCreateGlobalSecondaryIndexAction (SecondaryIndex i k s p th) =
   D.createGlobalSecondaryIndexAction
     (renderIndexName i)
-    (keySchemaElement k Nothing)
+    (keySchemaElement k s)
     (maybe (D.projection & D.pProjectionType .~ Just D.KeysOnly) toProjection p)
     (D.provisionedThroughput (minThroughput . readThroughput $ th) (minThroughput . writeThroughput $ th))
 
 tableToGlobalSecondaryIndexes :: Table -> [D.GlobalSecondaryIndex]
 tableToGlobalSecondaryIndexes t =
-  with (tableGlobalSecondaryIndexes t) $ \(SecondaryIndex i k p th) ->
+  with (tableGlobalSecondaryIndexes t) $ \(SecondaryIndex i k s p th) ->
     D.globalSecondaryIndex
       (renderIndexName i)
-      (keySchemaElement k Nothing)
+      (keySchemaElement k s)
       (maybe (D.projection & D.pProjectionType .~ Just D.KeysOnly) toProjection p)
       (D.provisionedThroughput (minThroughput . readThroughput $ th) (minThroughput . writeThroughput $ th))
 
@@ -234,7 +234,10 @@ tableToAttributeDefintions :: Table -> [D.AttributeDefinition]
 tableToAttributeDefintions t = mconcat [
     [D.attributeDefinition (renderPartitionKey t) (partitionKeyType t)]
   , maybe [] (\(x, y) -> [D.attributeDefinition x y]) ((,) <$> renderSortKey t <*> sortKeyType t)
-  , with (tableGlobalSecondaryIndexes t) $ \(SecondaryIndex _ p _ _) -> D.attributeDefinition (renderItemKey p) (itemKeyType p)
+  , join . with (tableGlobalSecondaryIndexes t) $ \(SecondaryIndex _ p s _ _) -> mconcat [
+       [D.attributeDefinition (renderItemKey p) (itemKeyType p)]
+     , maybe [] (\(x, y) -> [D.attributeDefinition x y]) ((,) <$> fmap renderItemKey s <*> fmap itemKeyType s)
+     ]
   ]
 
 toThroughput :: ThroughputPorridge -> ThroughputPorridge -> D.ProvisionedThroughput
@@ -285,7 +288,7 @@ updateGlobalSecondayIndexes t indexes = do
     liftIO . T.putStrLn . mconcat $ ["    ` done"]
 
   -- Update
-  forM_ (These.catThese these) $ \((name, cth), (SecondaryIndex _ _ _ th)) -> do
+  forM_ (These.catThese these) $ \((name, cth), (SecondaryIndex _ _ _ _ th)) -> do
     let
       checkIndexRead =
         checkThroughput (cth ^. D.gsidProvisionedThroughput >>= view D.ptdReadCapacityUnits) (readThroughput th)

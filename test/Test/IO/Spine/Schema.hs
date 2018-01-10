@@ -31,6 +31,10 @@ testTableNameFour :: TableName
 testTableNameFour =
   TableName "spine.test.schema.four"
 
+testTableNameFive :: TableName
+testTableNameFive =
+  TableName "spine.test.schema.five"
+
 testThroughput :: Throughput
 testThroughput =
   let
@@ -112,7 +116,7 @@ prop_secondary = once . testAWS $ do
         testTableNameThree
         (ItemStringKey "spine-pkey")
         Nothing
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing testThroughput]
+        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughput]
         testThroughput]
   b <- runEitherT . initialise $
     Schema [
@@ -120,7 +124,7 @@ prop_secondary = once . testAWS $ do
         testTableNameThree
         (ItemStringKey "spine-pkey")
         Nothing
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing testThroughputThree]
+        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughputThree]
         testThroughput]
   pure $ (a, b) === (Right (), Right ())
 
@@ -139,7 +143,7 @@ prop_secondary_compat = once . testAWS $ do
         testTableNameFour
         (ItemStringKey "spine-pkey")
         (Just $ ItemStringKey "spine-sort-key")
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing testThroughput]
+        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughput]
         testThroughputTwo]
   c <- runEitherT . initialise $
     Schema [
@@ -147,10 +151,20 @@ prop_secondary_compat = once . testAWS $ do
         testTableNameFour
         (ItemStringKey "spine-pkey")
         (Just $ ItemStringKey "spine-sort-key")
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing testThroughputTwo]
+        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughputTwo]
         testThroughputTwo]
   pure $ (a, b, c) === (Right (), Right (), Right ())
 
+prop_secondary_index_sort_key = once . testAWS $ do
+  a <- runEitherT . initialise $
+    Schema [
+      Table
+        testTableNameFive
+        (ItemIntKey "spine-pkey")
+        Nothing
+        [SecondaryIndex (IndexName "spine-index2") (ItemStringKey "spine-b") (Just $ ItemIntKey "spine-sort-int") Nothing testThroughput]
+        testThroughputTwo]
+  pure $ a === Right ()
 
 return []
 tests = $quickCheckAll

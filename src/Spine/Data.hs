@@ -73,10 +73,11 @@ newtype IndexName =
       renderIndexName :: Text
     } deriving (Eq, Show)
 
-data SecondaryIndex = forall a.
+data SecondaryIndex = forall a b.
   SecondaryIndex {
       indexName :: IndexName
     , indexPrimaryKey :: ItemKey a
+    , indexSortKey :: Maybe (ItemKey b)
     , indexProjection :: Maybe Projection
     , indexThroughput :: Throughput
     }
