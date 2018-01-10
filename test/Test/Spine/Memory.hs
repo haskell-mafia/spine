@@ -92,6 +92,14 @@ prop_update'_notcontains_ok = forAll ((,) <$> elements simpsons <*> elements mup
     z <- get state s
     pure $ (r, z) === (True, Just [Attribute ks [s, m]])
 
+prop_update'_notcontains_ok_empty = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
+  testIO $ do
+    state <- newTableState g
+    set state s []
+    r <- updateWith state s [Attribute ks [m]] (NotContains ks [m])
+    z <- get state s
+    pure $ (r, z) === (True, Just [Attribute ks [m]])
+
 prop_set_with_notcontains_fail = forAll ((,) <$> elements simpsons <*> elements muppets) $ \(s, m) ->
   testIO $ do
     state <- newTableState g

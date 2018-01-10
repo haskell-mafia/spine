@@ -219,15 +219,17 @@ runUpdates p ls =
 runUpdate :: Attribute -> [Attribute] -> [Attribute]
 runUpdate a@(Attribute k v) l =
   case L.partition (\(Attribute k' _) -> renderKey k' == renderKey k) l of
-    (xs, l') ->
+    ([], _) ->
+      Attribute k v : l
+    (xs, l') -> do
       join . with xs $ \(Attribute x xv) -> -- should fail if not a singleton?
         case (x, k) of
           (IntSetKey _, IntSetKey _) ->
-            (Attribute x (xv <> v)) : l'
+            Attribute x (xv <> v) : l'
           (StringSetKey _, StringSetKey _) ->
-            (Attribute x (xv <> v)) : l'
+            Attribute x (xv <> v) : l'
           (BinarySetKey _, BinarySetKey _) ->
-            (Attribute x (xv <> v)) : l'
+            Attribute x (xv <> v) : l'
           _ ->
             a : l'
 
