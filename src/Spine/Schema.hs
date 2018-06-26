@@ -85,7 +85,7 @@ initialise schema = do
           left . SchemaKeysMismatch $ tableName t
 
         -- don't update the throughput because this causes throttling limits and competes with auto scaling the throughput.
-        when false $
+        when False $
           -- update modes
           when ((not . isJustRight) checkRead || (not . isJustRight) checkWrite) $ do
             liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
@@ -257,7 +257,7 @@ updateGlobalSecondayIndexes t indexes = do
     these = Map.elems $ Align.align current expected
 
   -- disabling the deletion of 2ndary indexes due to time taken to add/remove. This should be a human approved change.
-  when false $
+  when False $
     -- Delete
     forM_ (These.catThis these) $ \(name, x) -> do
       liftIO . T.putStrLn . mconcat $ ["  ` deleting global secondary index: ", name]
