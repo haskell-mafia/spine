@@ -84,11 +84,13 @@ initialise schema = do
         when (v ^. D.tdKeySchema /= Just (tableToSchemaElement t)) $
           left . SchemaKeysMismatch $ tableName t
 
-        -- update modes
-        when ((not . isJustRight) checkRead || (not . isJustRight) checkWrite) $ do
-          liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
-          lift . void . A.send $ D.updateTable (renderTableName $ tableName t) &
-            D.utProvisionedThroughput .~ Just (toThroughput checkRead checkWrite)
+        -- don't update the throughput because this causes throttling limits and competes with auto scaling the throughput.
+        when false $
+          -- update modes
+          when ((not . isJustRight) checkRead || (not . isJustRight) checkWrite) $ do
+            liftIO . T.putStrLn . mconcat $ ["  ` updating throughput"]
+            lift . void . A.send $ D.updateTable (renderTableName $ tableName t) &
+              D.utProvisionedThroughput .~ Just (toThroughput checkRead checkWrite)
 
         -- Secondary Indexes
         lift $ updateGlobalSecondayIndexes t indexes
@@ -254,28 +256,30 @@ updateGlobalSecondayIndexes t indexes = do
         (z, (z, i))
     these = Map.elems $ Align.align current expected
 
-  -- Delete
-  forM_ (These.catThis these) $ \(name, x) -> do
-    liftIO . T.putStrLn . mconcat $ ["  ` deleting global secondary index: ", name]
-    let
-      delete =
-        void . A.await indexNotExists $ D.updateTable (renderTableName $ tableName t)
-          & D.utGlobalSecondaryIndexUpdates .~ [
-              D.globalSecondaryIndexUpdate & D.gsiuDelete .~ Just (D.deleteGlobalSecondaryIndexAction name)
-            ]
+  -- disabling the deletion of 2ndary indexes due to time taken to add/remove. This should be a human approved change.
+  when false $
+    -- Delete
+    forM_ (These.catThis these) $ \(name, x) -> do
+      liftIO . T.putStrLn . mconcat $ ["  ` deleting global secondary index: ", name]
+      let
+        delete =
+          void . A.await indexNotExists $ D.updateTable (renderTableName $ tableName t)
+            & D.utGlobalSecondaryIndexUpdates .~ [
+                D.globalSecondaryIndexUpdate & D.gsiuDelete .~ Just (D.deleteGlobalSecondaryIndexAction name)
+              ]
 
-    case x ^. D.gsidIndexStatus of
-      Nothing ->
-        delete
-      Just D.ISActive ->
-        delete
-      Just D.ISCreating ->
-        delete
-      Just D.ISDeleting ->
-        pure ()
-      Just D.ISUpdating ->
-        delete
-    liftIO . T.putStrLn . mconcat $ ["    ` done"]
+      case x ^. D.gsidIndexStatus of
+        Nothing ->
+          delete
+        Just D.ISActive ->
+          delete
+        Just D.ISCreating ->
+          delete
+        Just D.ISDeleting ->
+          pure ()
+        Just D.ISUpdating ->
+          delete
+      liftIO . T.putStrLn . mconcat $ ["    ` done"]
 
   -- Create
   forM_ (These.catThat these) $ \s -> do
