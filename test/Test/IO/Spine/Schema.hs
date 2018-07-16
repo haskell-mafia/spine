@@ -128,32 +128,32 @@ prop_secondary = once . testAWS $ do
         testThroughput]
   pure $ (a, b) === (Right (), Right ())
 
-prop_secondary_compat = once . testAWS $ do
-  a <- runEitherT . initialise $
-    Schema [
-      Table
-        testTableNameFour
-        (ItemStringKey "spine-pkey")
-        (Just $ ItemStringKey "spine-sort-key")
-        []
-        testThroughputTwo]
-  b <- runEitherT . initialise $
-    Schema [
-      Table
-        testTableNameFour
-        (ItemStringKey "spine-pkey")
-        (Just $ ItemStringKey "spine-sort-key")
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughput]
-        testThroughputTwo]
-  c <- runEitherT . initialise $
-    Schema [
-      Table
-        testTableNameFour
-        (ItemStringKey "spine-pkey")
-        (Just $ ItemStringKey "spine-sort-key")
-        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughputTwo]
-        testThroughputTwo]
-  pure $ (a, b, c) === (Right (), Right (), Right ())
+--prop_secondary_compat = once . testAWS $ do
+--  a <- runEitherT . initialise $
+--    Schema [
+--      Table
+--        testTableNameFour
+--        (ItemStringKey "spine-pkey")
+--        (Just $ ItemStringKey "spine-sort-key")
+--        []
+--        testThroughputTwo]
+--  b <- runEitherT . initialise $
+--    Schema [
+--      Table
+--        testTableNameFour
+--        (ItemStringKey "spine-pkey")
+--        (Just $ ItemStringKey "spine-sort-key")
+--        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughput]
+--        testThroughputTwo]
+--  c <- runEitherT . initialise $
+--    Schema [
+--      Table
+--        testTableNameFour
+--        (ItemStringKey "spine-pkey")
+--        (Just $ ItemStringKey "spine-sort-key")
+--        [SecondaryIndex (IndexName "spine-index1") (ItemStringKey "spine-b") Nothing Nothing testThroughputTwo]
+--        testThroughputTwo]
+--  pure $ (a, b, c) === (Right (), Right (), Right ())
 
 prop_secondary_index_sort_key = once . testAWS $ do
   a <- runEitherT . initialise $
