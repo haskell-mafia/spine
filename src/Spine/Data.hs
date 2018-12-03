@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StandaloneDeriving #-}
 module Spine.Data (
     Schema (..)
@@ -32,19 +32,20 @@ module Spine.Data (
   , isJustRight
   ) where
 
-import           Control.Lens ((.~), (^?), (^.), ix, _Just)
-
+import           Control.Lens (ix, (.~), (^.), (^?), _Just, (&))
+import           Control.Monad (forM)
+import           Data.Bool (bool)
 import           Data.ByteString (ByteString)
 import           Data.HashMap.Strict (HashMap)
+import           Data.Text (Text)
 import qualified Data.Text as T
-import           Data.Time (UTCTime, parseTimeM, formatTime)
+import           Data.Time (UTCTime, formatTime, parseTimeM)
 import           Data.Time.Locale.Compat (defaultTimeLocale)
-
 import           GHC.Show (appPrec, appPrec1)
-
-import           Numeric.Natural (Natural)
-
 import qualified Network.AWS.DynamoDB as D
+import           Numeric.Natural (Natural)
+import           Spine.P
+import           Text.Read (readMaybe)
 
 newtype Schema =
   Schema {
@@ -53,11 +54,11 @@ newtype Schema =
 
 data Table = forall a b.
   Table {
-      tableName :: TableName
-    , tablePartitionKey :: ItemKey a
-    , tableSortKey :: Maybe (ItemKey b)
+      tableName                   :: TableName
+    , tablePartitionKey           :: ItemKey a
+    , tableSortKey                :: Maybe (ItemKey b)
     , tableGlobalSecondaryIndexes :: [SecondaryIndex]
-    , tableThroughput :: Throughput
+    , tableThroughput             :: Throughput
     }
 
 newtype TableName =
@@ -72,9 +73,9 @@ newtype IndexName =
 
 data SecondaryIndex = forall a b.
   SecondaryIndex {
-      indexName :: IndexName
+      indexName       :: IndexName
     , indexPrimaryKey :: ItemKey a
-    , indexSortKey :: Maybe (ItemKey b)
+    , indexSortKey    :: Maybe (ItemKey b)
     , indexProjection :: Maybe Projection
     , indexThroughput :: Throughput
     }
@@ -104,7 +105,7 @@ data ThroughputPorridge =
 --
 data Throughput =
   Throughput {
-      readThroughput :: ThroughputRange
+      readThroughput  :: ThroughputRange
     , writeThroughput :: ThroughputRange
     } deriving (Eq, Show)
 

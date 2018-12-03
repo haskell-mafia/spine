@@ -1,31 +1,24 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Test.IO.Spine.Data where
 
-import           Control.Lens ((.~), (^.))
+import           Control.Lens ((.~), (^.), (&))
 import           Control.Monad.IO.Class (liftIO)
-
 import qualified Data.HashMap.Strict as H
-import           Data.Time (UTCTime, getCurrentTime)
+import           Data.Semigroup ((<>))
+import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-
-import           Disorder.Corpus
-
-import qualified Network.AWS.DynamoDB as D
-
+import           Data.Time (UTCTime, getCurrentTime)
+import           Hedgehog.Corpus
 import qualified Mismi.Amazonka as A
-
-import           P
-
+import qualified Network.AWS.DynamoDB as D
 import           Spine.Data
-
+import           Spine.P
 import           Test.Mismi (testAWS)
-import           Test.Spine.Schema
 import           Test.QuickCheck
-
+import           Test.Spine.Schema
 
 testTableName :: TableName
 testTableName =

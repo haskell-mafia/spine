@@ -1,19 +1,17 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module Test.Spine.Memory where
 
-import           Disorder.Core.IO
-import           Disorder.Corpus
+import Data.Text (Text)
+import Disorder.Core.IO
+import Hedgehog.Corpus
+import Spine.Data
+import Spine.Memory
+import Spine.P
 
-import           P
-
-import           Spine.Data
-import           Spine.Memory
-
-import           Test.Spine.Arbitrary ()
-import           Test.QuickCheck
+import Test.Spine.Arbitrary ()
+import Test.QuickCheck
 
 prop_cast a@(Attribute key _) =
   isJust (cast a key) === True

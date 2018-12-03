@@ -6,16 +6,17 @@ module Test.Spine.Arbitrary where
 
 import           Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as H
+import           Data.Text (Text)
 
 import           Disorder.Core
-import           Disorder.Corpus
+
+import           Hedgehog.Corpus
 
 import qualified Network.AWS.DynamoDB as D
 
-import           P
-
 import           Spine.Data
 import           Spine.Memory
+import           Spine.P
 
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()

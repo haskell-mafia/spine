@@ -1,15 +1,15 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Spine.Batch (
     consume
   ) where
 
-import           Control.Lens ((.~), (^.))
-
-import           Data.HashMap.Strict (HashMap)
+import Control.Lens ((.~), (^.), (&))
+import Data.Semigroup ((<>))
+import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as H
-
-import           Mismi (AWS)
+import Data.Text (Text)
+import Mismi (AWS)
 import qualified Mismi.Amazonka as A
 
 import qualified Network.AWS.DynamoDB as D

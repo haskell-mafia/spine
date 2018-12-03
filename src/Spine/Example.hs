@@ -5,7 +5,8 @@ module Spine.Example (
   , kThing
   ) where
 
-import           Spine.Data
+import Data.Text (Text)
+import Spine.Data
 
 schema :: Schema
 schema =

@@ -41,6 +41,7 @@ library
                        Spine.Example
                        Spine.Memory
                        Spine.Schema
+                       Spine.P
 
 test-suite test
   type:                exitcode-stdio-1.0
@@ -59,6 +60,7 @@ test-suite test
                      , hedgehog-corpus
                      , amazonka-dynamodb
                      , unordered-containers
+                     , text
                      , QuickCheck                      >= 2.7        && < 2.10
                      , quickcheck-instances            == 0.3.*
 

@@ -26,15 +26,16 @@ module Spine.Memory (
 
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 
-import qualified Data.List as L
 import           Data.IORef (IORef, newIORef, readIORef, atomicModifyIORef')
+import qualified Data.List as L
 import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as H
+import           Data.Semigroup ((<>))
 
 import           GHC.Show (appPrec, appPrec1, showSpace)
 
 import           Spine.Data (ItemKey, Key(..), renderKey, toEncoding)
-
+import           Spine.P
 -- |
 -- TableState represents a single dynamodb table where the key for the
 -- first hashmap is the partition item key and the nested hashmap

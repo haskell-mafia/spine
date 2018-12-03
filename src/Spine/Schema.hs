@@ -1,5 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Spine.Schema (
     InitialisationError (..)
   , renderInitialisationError
@@ -7,30 +7,25 @@ module Spine.Schema (
   , destroy
   ) where
 
-import           Control.Lens (view, (^.), (.~), _Just)
-import           Control.Lens (Fold, (^?), folding, concatOf)
+import           Control.Lens (Fold, concatOf, folding, (^?))
+import           Control.Lens (view, (.~), (^.), _Just, (&))
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Class (lift)
-
-import           Data.Conduit ((=$=), ($$))
-import qualified Data.Conduit.List as C
+import           Control.Monad.Trans.Either (EitherT, left)
 import qualified Data.Align as Align
-import qualified Data.These as These
-import qualified Data.Map.Strict as Map
-
+import           Data.Conduit (($$), (=$=))
+import qualified Data.Conduit.List as C
 import           Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.Text.IO as T
+import qualified Data.Map.Strict as Map
 import qualified Data.Set as S
-
-
+import           Data.Text (Text)
+import qualified Data.Text.IO as T
+import qualified Data.These as These
 import           Mismi (AWS)
 import qualified Mismi.Amazonka as A
-
 import qualified Network.AWS.DynamoDB as D
-
 import           Spine.Data
-
-import           Control.Monad.Trans.Either (EitherT, left)
+import           Spine.P
 
 data InitialisationError =
     SchemaKeysMismatch TableName
@@ -238,8 +233,8 @@ tableToAttributeDefintions t = mconcat [
   ]
 
 toThroughput :: ThroughputPorridge -> ThroughputPorridge -> D.ProvisionedThroughput
-toThroughput read write =
-  D.provisionedThroughput (desiredThroughput read) (desiredThroughput write)
+toThroughput read' write =
+  D.provisionedThroughput (desiredThroughput read') (desiredThroughput write)
 
 
 updateGlobalSecondayIndexes :: Table -> [D.GlobalSecondaryIndexDescription] -> AWS ()
