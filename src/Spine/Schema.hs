@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 module Spine.Schema (
@@ -29,11 +28,9 @@ import qualified Mismi.Amazonka as A
 
 import qualified Network.AWS.DynamoDB as D
 
-import           P
-
 import           Spine.Data
 
-import           X.Control.Monad.Trans.Either (EitherT, left)
+import           Control.Monad.Trans.Either (EitherT, left)
 
 data InitialisationError =
     SchemaKeysMismatch TableName

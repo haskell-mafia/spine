@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -44,8 +43,6 @@ import           Data.Time.Locale.Compat (defaultTimeLocale)
 import           GHC.Show (appPrec, appPrec1)
 
 import           Numeric.Natural (Natural)
-
-import           P
 
 import qualified Network.AWS.DynamoDB as D
 

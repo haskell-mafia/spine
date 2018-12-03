@@ -3,13 +3,10 @@
 	url = git@github.com:ambiata/p
 [submodule "lib/disorder"]
 	path = lib/disorder
-	url = git@github.com:ambiata/disorder.hs
+	url = git@github.com:tmcgilchrist/disorder.hs
 [submodule "lib/x"]
 	path = lib/x
 	url = git@github.com:ambiata/x
 [submodule "lib/mismi"]
 	path = lib/mismi
-	url = git@github.com:ambiata/mismi
-[submodule "lib/amazonka"]
-	path = lib/amazonka
-	url = git@github.com:ambiata/amazonka
+	url = git@github.com:tmcgilchrist/mismi

@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Spine.Example (
     schema
@@ -7,8 +6,6 @@ module Spine.Example (
   ) where
 
 import           Spine.Data
-
-import           P
 
 schema :: Schema
 schema =

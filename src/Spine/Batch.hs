@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
 module Spine.Batch (
@@ -14,8 +13,6 @@ import           Mismi (AWS)
 import qualified Mismi.Amazonka as A
 
 import qualified Network.AWS.DynamoDB as D
-
-import           P
 
 consume :: D.BatchGetItem -> AWS (HashMap Text [HashMap Text D.AttributeValue])
 consume action =

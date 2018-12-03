@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE GADTs #-}
@@ -33,8 +32,6 @@ import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as H
 
 import           GHC.Show (appPrec, appPrec1, showSpace)
-
-import           P
 
 import           Spine.Data (ItemKey, Key(..), renderKey, toEncoding)
 
